@@ -1,0 +1,9 @@
+{
+  "consumer_lag_mean": 0,
+  "consumer_lag_std": 100,
+  "throughput_mean": 1000,
+  "throughput_std": 150,
+  "_notes": "Hand-tuned for LOW profile (1K events/sec base, +/-20% sinusoidal). During normal operation, consumer lag stays near-zero. Throughput targets 800-1200/sec with sinusoidal variation. Lag recovery threshold: mean + 3*std = 300 msgs. Throughput recovery threshold: mean - 2*std = 700/sec.",
+  "_source": "baseline_24h.parquet (39h run, 24h window exported)",
+  "_num_timestamps": 8641
+}

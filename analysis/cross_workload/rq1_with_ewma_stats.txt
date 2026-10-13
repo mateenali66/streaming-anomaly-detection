@@ -1,0 +1,87 @@
+RQ1 MODEL COMPARISON WITH EWMA PROMOTED INTO THE MAIN PANEL
+
+Anchor window: 30s. Unit of analysis is the fold: under
+leave-one-rep-out each fold tests exactly one held-out repetition, so the ten
+test partitions are disjoint. Training sets overlap (each repetition appears in
+seven of ten), so contrasts are paired over folds rather than pooled.
+
+
+=== ecommerce: mean (fold-clustered SE), ranked by AUC-ROC ===
+    model  f1_score_mean  f1_score_clusterse  auc_roc_mean  auc_roc_clusterse
+       RF         0.5663              0.0137        0.7275             0.0153
+   OC_SVM         0.4113              0.0408        0.6502             0.0165
+     EWMA         0.5272              0.0038        0.6499             0.0034
+RuleBased         0.4836              0.0004        0.5730             0.0074
+    DAGMM         0.4716              0.0159        0.5722             0.0272
+       IF         0.4681              0.0036        0.5505             0.0086
+ DeepSVDD         0.4820              0.0126        0.5429             0.0124
+ LSTM_VAE         0.4880              0.0095        0.5406             0.0128
+ Trans_AE         0.4957              0.0097        0.5394             0.0152
+  LSTM_AE         0.4908              0.0130        0.5354             0.0159
+   CNN_AE         0.4898              0.0131        0.5336             0.0133
+
+=== iot: mean (fold-clustered SE), ranked by AUC-ROC ===
+    model  f1_score_mean  f1_score_clusterse  auc_roc_mean  auc_roc_clusterse
+       RF         0.5861              0.0176        0.7668             0.0080
+   OC_SVM         0.4602              0.0276        0.6137             0.0179
+RuleBased         0.4846              0.0008        0.6123             0.0102
+     EWMA         0.5096              0.0029        0.6107             0.0055
+       IF         0.4716              0.0096        0.6011             0.0120
+ DeepSVDD         0.4808              0.0145        0.5981             0.0125
+    DAGMM         0.5064              0.0083        0.5832             0.0255
+ Trans_AE         0.4863              0.0108        0.5684             0.0158
+  LSTM_AE         0.4870              0.0050        0.5424             0.0200
+ LSTM_VAE         0.4853              0.0121        0.5416             0.0146
+   CNN_AE         0.4835              0.0090        0.5405             0.0135
+
+=== ecommerce, f1_score: model minus EWMA, paired over the 10 held-out repetitions (Wilcoxon signed-rank, Holm-corrected) ===
+ workload   metric     model  delta_vs_ewma     se   ci_lo   ci_hi  wilcoxon_stat    pval  n_folds  p_holm  sig_holm_05
+ecommerce f1_score        RF         0.0391 0.0126  0.0145  0.0608            7.0 0.03711       10 0.03711         True
+ecommerce f1_score  Trans_AE        -0.0315 0.0092 -0.0482 -0.0143            4.0 0.01367       10 0.03125         True
+ecommerce f1_score   LSTM_AE        -0.0364 0.0114 -0.0583 -0.0164            3.0 0.00977       10 0.03125         True
+ecommerce f1_score    CNN_AE        -0.0373 0.0113 -0.0592 -0.0175            1.0 0.00391       10 0.03125         True
+ecommerce f1_score  LSTM_VAE        -0.0392 0.0094 -0.0564 -0.0214            2.0 0.00586       10 0.03125         True
+ecommerce f1_score RuleBased        -0.0436 0.0037 -0.0496 -0.0361            0.0 0.00195       10 0.01953         True
+ecommerce f1_score  DeepSVDD        -0.0452 0.0123 -0.0703 -0.0251            0.0 0.00391       10 0.03125         True
+ecommerce f1_score     DAGMM        -0.0556 0.0146 -0.0834 -0.0298            1.0 0.00391       10 0.03125         True
+ecommerce f1_score        IF        -0.0591 0.0052 -0.0681 -0.0491            0.0 0.00195       10 0.01953         True
+ecommerce f1_score    OC_SVM        -0.1159 0.0396 -0.1916 -0.0503            1.0 0.00391       10 0.03125         True
+
+=== ecommerce, auc_roc: model minus EWMA, paired over the 10 held-out repetitions (Wilcoxon signed-rank, Holm-corrected) ===
+ workload  metric     model  delta_vs_ewma     se   ci_lo   ci_hi  wilcoxon_stat    pval  n_folds  p_holm  sig_holm_05
+ecommerce auc_roc        RF         0.0776 0.0165  0.0433  0.1040            1.0 0.00391       10 0.01953         True
+ecommerce auc_roc    OC_SVM         0.0003 0.0165 -0.0308  0.0305           27.0 1.00000       10 1.00000        False
+ecommerce auc_roc RuleBased        -0.0770 0.0096 -0.0953 -0.0596            0.0 0.00195       10 0.01953         True
+ecommerce auc_roc     DAGMM        -0.0777 0.0287 -0.1349 -0.0273            4.0 0.01367       10 0.02734         True
+ecommerce auc_roc        IF        -0.0994 0.0089 -0.1165 -0.0839            0.0 0.00195       10 0.01953         True
+ecommerce auc_roc  DeepSVDD        -0.1071 0.0139 -0.1325 -0.0816            0.0 0.00195       10 0.01953         True
+ecommerce auc_roc  LSTM_VAE        -0.1093 0.0148 -0.1361 -0.0811            0.0 0.00195       10 0.01953         True
+ecommerce auc_roc  Trans_AE        -0.1105 0.0169 -0.1416 -0.0787            0.0 0.00195       10 0.01953         True
+ecommerce auc_roc   LSTM_AE        -0.1145 0.0174 -0.1472 -0.0824            0.0 0.00195       10 0.01953         True
+ecommerce auc_roc    CNN_AE        -0.1163 0.0149 -0.1426 -0.0878            0.0 0.00195       10 0.01953         True
+
+=== iot, f1_score: model minus EWMA, paired over the 10 held-out repetitions (Wilcoxon signed-rank, Holm-corrected) ===
+workload   metric     model  delta_vs_ewma     se   ci_lo   ci_hi  wilcoxon_stat    pval  n_folds  p_holm  sig_holm_05
+     iot f1_score        RF         0.0765 0.0172  0.0423  0.1074            2.0 0.00586       10 0.04688         True
+     iot f1_score     DAGMM        -0.0032 0.0084 -0.0182  0.0131           22.0 0.62500       10 0.62500        False
+     iot f1_score   LSTM_AE        -0.0226 0.0063 -0.0348 -0.0114            1.0 0.00391       10 0.03516         True
+     iot f1_score  Trans_AE        -0.0233 0.0113 -0.0453 -0.0031            9.0 0.06445       10 0.25781        False
+     iot f1_score  LSTM_VAE        -0.0243 0.0120 -0.0483 -0.0038            9.0 0.06445       10 0.25781        False
+     iot f1_score RuleBased        -0.0250 0.0028 -0.0301 -0.0195            0.0 0.00195       10 0.01953         True
+     iot f1_score    CNN_AE        -0.0261 0.0102 -0.0457 -0.0084            5.0 0.01953       10 0.11719        False
+     iot f1_score  DeepSVDD        -0.0288 0.0148 -0.0578 -0.0032           10.0 0.08398       10 0.25781        False
+     iot f1_score        IF        -0.0380 0.0104 -0.0582 -0.0200            3.0 0.00977       10 0.06836        False
+     iot f1_score    OC_SVM        -0.0494 0.0274 -0.1067 -0.0122            5.0 0.01953       10 0.11719        False
+
+=== iot, auc_roc: model minus EWMA, paired over the 10 held-out repetitions (Wilcoxon signed-rank, Holm-corrected) ===
+workload  metric     model  delta_vs_ewma     se   ci_lo   ci_hi  wilcoxon_stat    pval  n_folds  p_holm  sig_holm_05
+     iot auc_roc        RF         0.1562 0.0074  0.1427  0.1699            0.0 0.00195       10 0.01953         True
+     iot auc_roc    OC_SVM         0.0031 0.0165 -0.0279  0.0326           26.0 0.92188       10 1.00000        False
+     iot auc_roc RuleBased         0.0017 0.0143 -0.0245  0.0287           26.0 0.92188       10 1.00000        False
+     iot auc_roc        IF        -0.0095 0.0156 -0.0373  0.0198           21.0 0.55664       10 1.00000        False
+     iot auc_roc  DeepSVDD        -0.0126 0.0161 -0.0388  0.0206           18.0 0.37500       10 1.00000        False
+     iot auc_roc     DAGMM        -0.0275 0.0277 -0.0792  0.0230           18.0 0.37500       10 1.00000        False
+     iot auc_roc  Trans_AE        -0.0422 0.0175 -0.0740 -0.0091            8.0 0.04883       10 0.29297        False
+     iot auc_roc   LSTM_AE        -0.0683 0.0219 -0.1080 -0.0265            5.0 0.01953       10 0.13672        False
+     iot auc_roc  LSTM_VAE        -0.0690 0.0166 -0.0999 -0.0380            1.0 0.00391       10 0.03516         True
+     iot auc_roc    CNN_AE        -0.0702 0.0160 -0.0989 -0.0395            2.0 0.00586       10 0.04688         True

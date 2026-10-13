@@ -1,0 +1,31 @@
+BROKER COUNTER RESETS OVER EACH WHOLE CAMPAIGN (a JVM restart resets them)
+ workload                        file  broker  samples  counter_resets
+ecommerce campaign_v1_metrics.parquet       0    15661               0
+ecommerce campaign_v1_metrics.parquet       1    15661               0
+ecommerce campaign_v1_metrics.parquet       2    15661               0
+ecommerce campaign_v2_metrics.parquet       0     7741               0
+ecommerce campaign_v2_metrics.parquet       1     7741               0
+ecommerce campaign_v2_metrics.parquet       2     7741               0
+      iot        campaign_iot.parquet       0    13759               0
+      iot        campaign_iot.parquet       1    13759               0
+      iot        campaign_iot.parquet       2    13759               0
+
+PER FAULT: runs with replication disturbance, and per-broker message rate during injection as a ratio to pre-fault
+                 runs  runs_with_isr_shrink  runs_with_under_replication  msg_rate_ratio_b0_mean  msg_rate_ratio_b1_mean  msg_rate_ratio_b2_mean
+workload  fault                                                                                                                                 
+ecommerce F1       10                     0                            0                   0.976                   0.984                   0.969
+          F2       10                     0                            0                   1.012                   1.004                   1.003
+          F3       10                     0                            0                   1.106                   1.094                   1.098
+          F4       10                     0                            0                   0.973                   0.963                   0.979
+          F5       10                     0                            0                   0.497                   0.502                   0.497
+          F6        1                     0                            0                     NaN                     NaN                     NaN
+          F7       10                     0                            0                   0.684                   0.691                   0.677
+          F8       10                     0                            0                   1.252                   1.262                   1.259
+iot       F1       10                     0                            0                   0.971                   0.968                   0.973
+          F2       10                     0                            0                   1.000                   1.004                   1.005
+          F3       10                     0                            0                   1.102                   1.105                   1.103
+          F4       10                     0                            0                   0.972                   0.977                   0.976
+          F5       10                     0                            0                   0.503                   0.494                   0.495
+          F6        1                     0                            0                     NaN                     NaN                     NaN
+          F7       10                     0                            0                   0.579                   0.570                   0.571
+          F8       10                     0                            0                   1.035                   1.035                   1.050

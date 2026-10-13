@@ -1,0 +1,27 @@
+{
+  "type": "record",
+  "name": "Purchase",
+  "namespace": "com.phonotech.streaming.events",
+  "fields": [
+    {"name": "event_id", "type": "string"},
+    {"name": "user_id", "type": "string"},
+    {"name": "order_id", "type": "string"},
+    {"name": "session_id", "type": "string"},
+    {"name": "timestamp", "type": {"type": "long", "logicalType": "timestamp-millis"}},
+    {"name": "items", "type": {
+      "type": "array",
+      "items": {
+        "type": "record",
+        "name": "OrderItem",
+        "fields": [
+          {"name": "product_id", "type": "string"},
+          {"name": "quantity", "type": "int"},
+          {"name": "unit_price", "type": {"type": "bytes", "logicalType": "decimal", "precision": 10, "scale": 2}}
+        ]
+      }
+    }},
+    {"name": "total", "type": {"type": "bytes", "logicalType": "decimal", "precision": 12, "scale": 2}},
+    {"name": "payment_method", "type": {"type": "enum", "name": "PaymentMethod", "symbols": ["CREDIT_CARD", "DEBIT_CARD", "PAYPAL", "BANK_TRANSFER"]}},
+    {"name": "ip_address", "type": "string"}
+  ]
+}

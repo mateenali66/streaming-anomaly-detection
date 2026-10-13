@@ -1,0 +1,114 @@
+# In-cluster metric export job
+# Runs inside the cluster, so it does not depend on a local session or a port-forward
+# Talks to Prometheus via cluster DNS, uploads to S3 via IRSA
+# Uses a dedicated PVC for scratch space (not ephemeral node disk)
+#
+# Usage: kubectl apply -f metric-export-job.yaml
+# To re-run: kubectl delete job export-baseline-24h -n streaming && kubectl apply -f metric-export-job.yaml
+# Override via env vars in the spec before applying
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: metric-exporter
+  namespace: streaming
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/stream-ad-bench-metric-exporter
+---
+# Scratch PVC for export data (survives pod restart, prevents ephemeral disk issues)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: export-scratch
+  namespace: streaming
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: gp3
+  resources:
+    requests:
+      storage: 100Gi
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: export-baseline-24h
+  namespace: streaming
+spec:
+  backoffLimit: 2
+  activeDeadlineSeconds: 7200
+  template:
+    spec:
+      tolerations:
+        - key: "workload"
+          value: "monitoring"
+          effect: "NoSchedule"
+      nodeSelector:
+        workload: monitoring
+      serviceAccountName: metric-exporter
+      restartPolicy: OnFailure
+      initContainers:
+        - name: install-deps
+          image: python:3.12-slim
+          command: ["pip", "install", "--target=/deps", "pyarrow", "numpy"]
+          volumeMounts:
+            - name: deps
+              mountPath: /deps
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+              ephemeral-storage: 2Gi
+      containers:
+        - name: exporter
+          image: python:3.12-slim
+          command:
+            - /bin/sh
+            - -c
+            - |
+              pip install awscli --quiet 2>/dev/null
+              export PYTHONPATH="/deps:$PYTHONPATH"
+              python3 /scripts/export_metrics.py \
+                --prometheus http://prometheus-kube-prometheus-prometheus.observability.svc.cluster.local:9090 \
+                --duration ${EXPORT_DURATION:-24h} \
+                --output /scratch/${EXPORT_OUTPUT:-baseline_24h.parquet} \
+                --s3-bucket ${S3_BUCKET:?set S3_BUCKET} \
+                --s3-prefix ${S3_PREFIX:-baseline/}
+          env:
+            - name: EXPORT_DURATION
+              value: "24h"
+            - name: EXPORT_OUTPUT
+              value: "baseline_24h.parquet"
+            - name: S3_BUCKET
+              value: "<your-bucket>"
+            - name: S3_PREFIX
+              value: "baseline/"
+            - name: AWS_DEFAULT_REGION
+              value: "us-east-2"
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+            - name: deps
+              mountPath: /deps
+            - name: scratch
+              mountPath: /scratch
+          resources:
+            requests:
+              cpu: "2"
+              memory: 8Gi
+              ephemeral-storage: 1Gi
+            limits:
+              cpu: "4"
+              memory: 16Gi
+              ephemeral-storage: 5Gi
+      volumes:
+        - name: scripts
+          configMap:
+            name: export-script
+        - name: deps
+          emptyDir:
+            sizeLimit: 2Gi
+        - name: scratch
+          persistentVolumeClaim:
+            claimName: export-scratch

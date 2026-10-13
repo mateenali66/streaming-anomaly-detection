@@ -1,0 +1,16 @@
+{
+  "type": "record",
+  "name": "PageView",
+  "namespace": "com.phonotech.streaming.events",
+  "fields": [
+    {"name": "event_id", "type": "string"},
+    {"name": "user_id", "type": "string"},
+    {"name": "product_id", "type": "string"},
+    {"name": "session_id", "type": "string"},
+    {"name": "timestamp", "type": {"type": "long", "logicalType": "timestamp-millis"}},
+    {"name": "page_url", "type": "string"},
+    {"name": "referrer", "type": ["null", "string"], "default": null},
+    {"name": "user_agent", "type": "string"},
+    {"name": "ip_address", "type": "string"}
+  ]
+}

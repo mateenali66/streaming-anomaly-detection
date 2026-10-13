@@ -1,0 +1,21 @@
+# High priority class for Prometheus, prevents eviction during fault injection
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: monitoring-critical
+value: 1000000
+globalDefault: false
+description: "Critical monitoring workloads that must not be evicted"
+---
+# PodDisruptionBudget, prevents voluntary disruption of Prometheus
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: prometheus-pdb
+  namespace: observability
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: prometheus
+      prometheus: prometheus-kube-prometheus-prometheus

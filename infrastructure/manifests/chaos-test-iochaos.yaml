@@ -1,0 +1,19 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: IOChaos
+metadata:
+  name: test-io-latency
+  namespace: streaming
+spec:
+  action: latency
+  mode: one
+  selector:
+    namespaces:
+      - streaming
+    labelSelectors:
+      strimzi.io/cluster: streaming-kafka
+      strimzi.io/kind: Kafka
+  volumePath: /var/lib/kafka
+  path: "*"
+  delay: "200ms"
+  percent: 100
+  duration: "30s"

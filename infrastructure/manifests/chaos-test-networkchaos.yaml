@@ -1,0 +1,18 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: test-network-delay
+  namespace: streaming
+spec:
+  action: delay
+  mode: one
+  selector:
+    namespaces:
+      - streaming
+    labelSelectors:
+      strimzi.io/cluster: streaming-kafka
+      strimzi.io/kind: Kafka
+  delay:
+    latency: "200ms"
+    jitter: "50ms"
+  duration: "30s"

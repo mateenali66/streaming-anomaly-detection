@@ -1,0 +1,8 @@
+rootProject.name = 'streaming-flink-jobs'
+
+include 'enrichment'
+include 'aggregation'
+include 'fraud'
+include 'iot-enrichment'
+include 'iot-aggregation'
+include 'iot-alert'

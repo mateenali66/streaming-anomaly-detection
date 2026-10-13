@@ -1,0 +1,32 @@
+DETECTION LATENCY AT FIXED FPR BUDGETS, FULL PANEL
+
+e-commerce, 30s windows, published run tree, all ten models.
+Threshold per (model, test fold) is the (1 - budget) quantile of normal-window
+scores pooled over the other nine folds. Realised FPR is measured on the
+held-out fold and is not forced to meet the budget.
+
+=== FPR budget 1% ===
+    model  fpr_budget  n_folds  det_rate_mean  det_rate_se  median_latency_s  p95_latency_s  fpr_realised  fpr_realised_se
+ DeepSVDD        0.01       10          0.388        0.047            90.000        124.950         0.155            0.042
+   CNN_AE        0.01       10          0.362        0.022            28.500        124.050         0.238            0.023
+ Trans_AE        0.01       10          0.362        0.022            25.500        118.500         0.234            0.025
+  LSTM_AE        0.01       10          0.338        0.027            27.000         91.800         0.206            0.023
+ LSTM_VAE        0.01       10          0.338        0.027            25.500        107.550         0.220            0.020
+       RF        0.01       10          0.338        0.038            61.500        123.150         0.011            0.004
+   OC_SVM        0.01       10          0.262        0.071            79.500        100.950         0.021            0.011
+    DAGMM        0.01       10          0.188        0.070            51.000         80.100         0.027            0.011
+       IF        0.01       10          0.125        0.032           111.429        115.286         0.010            0.001
+RuleBased        0.01       10          0.125        0.000            90.000         90.000         0.010            0.002
+
+=== FPR budget 5% ===
+    model  fpr_budget  n_folds  det_rate_mean  det_rate_se  median_latency_s  p95_latency_s  fpr_realised  fpr_realised_se
+RuleBased        0.05       10          0.475        0.031            16.500         81.150         0.049            0.005
+       RF        0.05       10          0.462        0.042            46.500        118.200         0.058            0.027
+       IF        0.05       10          0.412        0.033            18.000         87.450         0.052            0.016
+ DeepSVDD        0.05       10          0.388        0.047            90.000        124.950         0.155            0.042
+   CNN_AE        0.05       10          0.362        0.022            28.500        124.050         0.238            0.023
+ Trans_AE        0.05       10          0.362        0.022            25.500        118.500         0.234            0.025
+  LSTM_AE        0.05       10          0.338        0.027            27.000         91.800         0.206            0.023
+ LSTM_VAE        0.05       10          0.338        0.027            25.500        107.550         0.220            0.020
+   OC_SVM        0.05       10          0.288        0.081            63.000         73.800         0.106            0.096
+    DAGMM        0.05       10          0.262        0.078            98.571        117.857         0.057            0.023

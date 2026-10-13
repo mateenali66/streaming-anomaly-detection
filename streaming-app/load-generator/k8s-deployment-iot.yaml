@@ -1,0 +1,60 @@
+# IoT load generator deployment (ECR image, separate from the e-commerce deployment).
+# Used for the IoT workload of the cross-workload campaign. It requests more CPU and
+# memory than the e-commerce deployment because IoT runs at 10K/s base with 2x
+# bursts to 20K/s, against 5K/s for the e-commerce baseline.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: load-generator
+  namespace: streaming
+  labels:
+    app: load-generator
+    workload: iot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: load-generator
+  template:
+    metadata:
+      labels:
+        app: load-generator
+        workload: iot
+    spec:
+      tolerations:
+        - key: "workload"
+          value: "monitoring"
+          effect: "NoSchedule"
+      nodeSelector:
+        workload: monitoring
+      containers:
+        - name: generator
+          image: ACCOUNT_ID.dkr.ecr.us-east-2.amazonaws.com/stream-ad-bench/load-generator:v3-iot
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: WORKLOAD
+              value: "IOT"
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: "streaming-kafka-kafka-bootstrap.streaming.svc.cluster.local:9092"
+            - name: KAFKA_TOPIC
+              value: "raw-events"
+            - name: THROUGHPUT_PROFILE
+              value: "IOT_MEDIUM"
+            - name: NUM_DEVICES
+              value: "100000"
+            - name: NUM_LOCATIONS
+              value: "500"
+            - name: BURST_PERIOD_SEC
+              value: "300"
+            - name: BURST_DURATION_SEC
+              value: "30"
+            - name: BURST_MULTIPLIER
+              value: "2.0"
+          resources:
+            requests:
+              cpu: "1"
+              memory: 1Gi
+            limits:
+              cpu: "2"
+              memory: 2Gi

@@ -1,0 +1,11 @@
+model,n_faults,spearman_rho,p_value
+IF,8,-0.51,0.1964
+OC_SVM,8,0.675,0.0663
+LSTM_AE,8,-0.248,0.5529
+Trans_AE,8,-0.093,0.827
+CNN_AE,8,-0.064,0.88
+LSTM_VAE,8,-0.039,0.9264
+DeepSVDD,8,,
+DAGMM,8,,
+RF,8,0.122,0.7739
+RuleBased,8,0.056,0.8946

@@ -1,0 +1,39 @@
+BUCKET CONSISTENCY (30s, mean F1)
+
+--- ECOMMERCE ---
+fault_id     F1     F2     F3     F4     F5     F6     F7     F8
+model                                                           
+LSTM_AE   0.481  0.491  0.631  0.657  0.849  0.742  0.667  0.546
+Trans_AE  0.472  0.442  0.649  0.657  0.772  0.725  0.667  0.546
+CNN_AE    0.479  0.491  0.648  0.657  0.822  0.742  0.667  0.546
+LSTM_VAE  0.454  0.491  0.601  0.657  0.844  0.742  0.667  0.546
+DeepSVDD  0.504  0.482  0.680  0.663  0.691  0.742  0.667  0.546
+DAGMM     0.403  0.206  0.504  0.628  0.637  0.386  0.687  0.574
+
+--- IOT ---
+fault_id     F1     F2     F3     F4     F5     F6     F7     F8
+model                                                           
+LSTM_AE   0.569  0.553  0.696  0.669  0.667  0.633  0.669  0.546
+Trans_AE  0.590  0.578  0.621  0.664  0.698  0.633  0.664  0.546
+CNN_AE    0.530  0.583  0.581  0.655  0.676  0.662  0.664  0.546
+LSTM_VAE  0.528  0.609  0.619  0.664  0.667  0.649  0.664  0.546
+DeepSVDD  0.489  0.428  0.526  0.679  0.668  0.592  0.669  0.539
+DAGMM     0.541  0.521  0.647  0.687  0.675  0.706  0.671  0.568
+
+Bucket-level (AE models only):
+                         mean    std  count
+workload  bucket_label                     
+ecommerce A             0.623  0.057     12
+          B             0.527  0.080     12
+          C             0.780  0.051      8
+iot       A             0.625  0.059     12
+          B             0.588  0.046     12
+          C             0.661  0.022      8
+
+Density-based on bucket B (DSVDD/DAGMM):
+fault_id               F1     F2     F3
+workload  model                        
+ecommerce DAGMM     0.403  0.206  0.504
+          DeepSVDD  0.504  0.482  0.680
+iot       DAGMM     0.541  0.521  0.647
+          DeepSVDD  0.489  0.428  0.526

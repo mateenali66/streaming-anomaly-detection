@@ -1,0 +1,62 @@
+CROSS-WORKLOAD TRANSFER v2 (193-feature shared subset, default hyperparams)
+
+Model weights always trained on the SOURCE workload. Only the target-side
+scaler differs: source_fit reuses the source NORMAL mean/sigma (v1 behaviour),
+target_fit refits on the target NORMAL windows (deployment-realistic).
+
+=== [source_fit] AUC ===
+case      ecom_to_ecom  ecom_to_iot  iot_to_iot  iot_to_ecom
+model                                                       
+CNN_AE           0.712        0.500       0.664        0.500
+DeepSVDD         0.554        0.500       0.606        0.500
+IF               0.620        0.441       0.590        0.455
+LSTM_AE          0.627        0.500       0.616        0.500
+LSTM_VAE         0.616        0.500       0.603        0.500
+OC_SVM           0.580        0.467       0.561        0.500
+Trans_AE         0.729        0.500       0.651        0.500
+
+=== [source_fit] F1 ===
+case      ecom_to_ecom  ecom_to_iot  iot_to_iot  iot_to_ecom
+model                                                       
+CNN_AE           0.260        0.220       0.290        0.147
+DAGMM            0.000        0.000       0.000        0.000
+DeepSVDD         0.283        0.220       0.280        0.147
+IF               0.192        0.221       0.244        0.147
+LSTM_AE          0.246        0.220       0.287        0.147
+LSTM_VAE         0.241        0.220       0.275        0.147
+OC_SVM           0.203        0.220       0.254        0.147
+Trans_AE         0.259        0.220       0.311        0.147
+
+[source_fit] degenerate (constant-score) cells: 14/32
+
+=== [target_fit] AUC ===
+case      ecom_to_ecom  ecom_to_iot  iot_to_iot  iot_to_ecom
+model                                                       
+CNN_AE           0.712        0.613       0.664        0.586
+DeepSVDD         0.554        0.646       0.606        0.439
+IF               0.620        0.517       0.590        0.465
+LSTM_AE          0.627        0.648       0.616        0.454
+LSTM_VAE         0.616        0.590       0.603        0.486
+OC_SVM           0.580        0.588       0.561        0.624
+Trans_AE         0.729        0.688       0.651        0.612
+
+=== [target_fit] F1 ===
+case      ecom_to_ecom  ecom_to_iot  iot_to_iot  iot_to_ecom
+model                                                       
+CNN_AE           0.260        0.280       0.290        0.237
+DAGMM            0.000        0.000       0.000        0.000
+DeepSVDD         0.283        0.303       0.280        0.147
+IF               0.192        0.219       0.244        0.147
+LSTM_AE          0.246        0.277       0.287        0.238
+LSTM_VAE         0.241        0.267       0.275        0.237
+OC_SVM           0.203        0.276       0.254        0.200
+Trans_AE         0.259        0.303       0.311        0.248
+
+[target_fit] degenerate (constant-score) cells: 4/32
+
+Always-fire F1 reference at target prevalence (2p/(1+p)):
+case
+ecom_to_ecom    0.147
+ecom_to_iot     0.220
+iot_to_ecom     0.147
+iot_to_iot      0.220

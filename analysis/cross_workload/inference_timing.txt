@@ -1,0 +1,17 @@
+PER-WINDOW SCORING LATENCY, CPU, BATCH SIZE 1
+
+CPU arm64 (arm), Python 3.14.8, torch 2.12.1, 8 torch threads
+20 warm-up calls, 256 timed calls per model; sequence length 11, 475 features
+
+    model  median_ms  p95_ms
+       IF     4.9532  5.3006
+   OC_SVM     0.0530  0.0546
+       RF    26.3871 27.5251
+RuleBased     0.0020  0.0027
+     EWMA     0.0025  0.0030
+  LSTM_AE     0.2402  0.2505
+ Trans_AE     0.5419  0.6239
+   CNN_AE     0.1975  0.2434
+ LSTM_VAE     0.3188  0.3710
+ DeepSVDD     0.0950  0.1021
+    DAGMM     0.4804  0.6226

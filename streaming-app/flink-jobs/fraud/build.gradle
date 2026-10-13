@@ -1,0 +1,1 @@
+ext.mainClass = 'com.phonotech.streaming.fraud.FraudDetectionJob'

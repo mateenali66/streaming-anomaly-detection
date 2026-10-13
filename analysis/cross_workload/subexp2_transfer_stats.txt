@@ -1,0 +1,63 @@
+CROSS-WORKLOAD TRANSFER: CLUSTER-AWARE ANALYSIS
+
+Clustering unit: fold (folds share repetitions by construction).
+Seeds are replicates nested within folds.
+DAGMM excluded from models: ['DAGMM']
+
+
+=== Scaler effect, ecom_to_iot (AUC) ===
+  N = 420 obs, 10 folds, 7 models
+  effect (scaling[T.target_fit])  = +0.0736
+  SE               = 0.0036
+  95% CI           = [+0.0666, +0.0806]
+  z                = +20.616
+  p                = 1.966e-94
+
+=== Scaler effect, iot_to_ecom (AUC) ===
+  N = 420 obs, 10 folds, 7 models
+  effect (scaling[T.target_fit])  = +0.0340
+  SE               = 0.0039
+  95% CI           = [+0.0263, +0.0417]
+  z                = +8.669
+  p                = 4.373e-18
+
+=== Transfer effect on target=ecom (AUC, target_fit) ===
+  N = 420 obs, 10 folds, 7 models
+  effect (transfer[T.cross])  = -0.0040
+  SE               = 0.0019
+  95% CI           = [-0.0077, -0.0003]
+  z                = -2.115
+  p                = 0.03442
+
+=== Transfer effect on target=iot (AUC, target_fit) ===
+  N = 420 obs, 10 folds, 7 models
+  effect (transfer[T.cross])  = -0.0078
+  SE               = 0.0028
+  95% CI           = [-0.0133, -0.0022]
+  z                = -2.737
+  p                = 0.006199
+
+=== Per-model cross-minus-within AUC (target_fit, paired by fold) ===
+target    model  within  cross   delta     se  n_folds
+  ecom   CNN_AE  0.5281 0.5252 -0.0029 0.0088       10
+  ecom DeepSVDD  0.5906 0.5915  0.0009 0.0147       10
+  ecom       IF  0.5514 0.5641  0.0127 0.0050       10
+  ecom  LSTM_AE  0.5235 0.5276  0.0041 0.0065       10
+  ecom LSTM_VAE  0.5317 0.5247 -0.0069 0.0072       10
+  ecom   OC_SVM  0.5668 0.5447 -0.0220 0.0033       10
+  ecom Trans_AE  0.5530 0.5393 -0.0138 0.0088       10
+   iot   CNN_AE  0.5554 0.5364 -0.0191 0.0026       10
+   iot DeepSVDD  0.5849 0.5546 -0.0303 0.0201       10
+   iot       IF  0.6043 0.5437 -0.0606 0.0057       10
+   iot  LSTM_AE  0.5427 0.5576  0.0149 0.0061       10
+   iot LSTM_VAE  0.5426 0.5531  0.0105 0.0057       10
+   iot   OC_SVM  0.5918 0.6074  0.0155 0.0048       10
+   iot Trans_AE  0.5741 0.5887  0.0146 0.0154       10
+
+=== Degenerate (constant-score) run fraction by scaling and case ===
+scaling       source_fit  target_fit
+case                                
+ecom_to_ecom       0.000         0.0
+ecom_to_iot        0.571         0.0
+iot_to_ecom        0.829         0.0
+iot_to_iot         0.000         0.0

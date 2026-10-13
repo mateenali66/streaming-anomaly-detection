@@ -1,0 +1,14 @@
+{
+  "type": "record",
+  "name": "IoTSensorEvent",
+  "namespace": "com.phonotech.streaming.iot",
+  "doc": "IoT sensor reading produced by a fleet of edge devices. Used for the cross-workload anomaly-detection campaign.",
+  "fields": [
+    {"name": "device_id", "type": "string"},
+    {"name": "timestamp", "type": "long", "doc": "Producer-side epoch milliseconds"},
+    {"name": "temperature", "type": "float", "doc": "Celsius"},
+    {"name": "humidity", "type": "float", "doc": "Relative humidity %"},
+    {"name": "battery_level", "type": "float", "doc": "Battery charge %"},
+    {"name": "location_id", "type": "int"}
+  ]
+}

@@ -1,0 +1,18 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: StressChaos
+metadata:
+  name: test-cpu-stress
+  namespace: streaming
+spec:
+  mode: one
+  selector:
+    namespaces:
+      - streaming
+    labelSelectors:
+      strimzi.io/cluster: streaming-kafka
+      strimzi.io/kind: Kafka
+  stressors:
+    cpu:
+      workers: 2
+      load: 80
+  duration: "30s"

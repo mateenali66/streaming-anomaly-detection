@@ -1,0 +1,33 @@
+THREE-STATE REGIMES ON AUC-ROC, PRIMARY-RUN SCORES (mean over 10 folds)
+
+ workload     model  active  recovery  hybrid  binary  active_minus_binary  p_active_vs_binary
+ecommerce    CNN_AE   0.572     0.574   0.573   0.534                0.038               0.004
+ecommerce     DAGMM   0.604     0.568   0.585   0.572                0.031               0.064
+ecommerce  DeepSVDD   0.559     0.524   0.541   0.543                0.016               0.084
+ecommerce      EWMA   0.680     0.548   0.613   0.650                0.030               0.002
+ecommerce        IF   0.536     0.467   0.501   0.551               -0.014               0.006
+ecommerce   LSTM_AE   0.562     0.561   0.561   0.535                0.027               0.037
+ecommerce  LSTM_VAE   0.574     0.570   0.572   0.541                0.034               0.014
+ecommerce    OC_SVM   0.705     0.631   0.668   0.650                0.055               0.010
+ecommerce        RF   0.752     0.551   0.650   0.728                0.024               0.002
+ecommerce RuleBased   0.583     0.526   0.554   0.573                0.010               0.014
+ecommerce  Trans_AE   0.585     0.591   0.588   0.539                0.046               0.002
+      iot    CNN_AE   0.593     0.605   0.599   0.540                0.052               0.002
+      iot     DAGMM   0.634     0.602   0.618   0.583                0.051               0.004
+      iot  DeepSVDD   0.637     0.549   0.592   0.598                0.038               0.010
+      iot      EWMA   0.616     0.507   0.561   0.611                0.006               0.084
+      iot        IF   0.627     0.560   0.593   0.601                0.026               0.004
+      iot   LSTM_AE   0.587     0.596   0.592   0.542                0.045               0.004
+      iot  LSTM_VAE   0.599     0.615   0.608   0.542                0.058               0.002
+      iot    OC_SVM   0.658     0.598   0.628   0.614                0.044               0.002
+      iot        RF   0.786     0.564   0.674   0.767                0.019               0.004
+      iot RuleBased   0.664     0.623   0.643   0.612                0.051               0.002
+      iot  Trans_AE   0.632     0.616   0.624   0.568                0.064               0.002
+
+mean prevalence by regime
+regime     active  binary  hybrid  recovery
+workload                                   
+ecommerce   0.486   0.323   0.659     0.497
+iot         0.488   0.324   0.659     0.496
+
+model-folds skipped (alignment failed): 0 []

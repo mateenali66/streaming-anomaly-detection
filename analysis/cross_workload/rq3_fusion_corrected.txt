@@ -1,0 +1,12 @@
+RQ3 CATEGORY FUSION
+
+All strategies are scored on the identical full test fold. Weights and every
+threshold are fitted on the other nine folds, never on the evaluated fold.
+F1 is reported against the always-fire baseline 2p/(1+p) at that population's
+prevalence, because F1 alone is not interpretable here.
+
+     strategy  n_folds     f1  f1_se    auc  auc_se  prevalence  always_fire  n_windows  f1_over_always_fire
+ weighted_loo       10 0.4853 0.0054 0.6600  0.0060      0.3189       0.4836      226.1               0.0017
+          max       10 0.4831 0.0006 0.5500  0.0095      0.3189       0.4836      226.1              -0.0005
+         mean       10 0.4834 0.0007 0.5319  0.0080      0.3189       0.4836      226.1              -0.0002
+majority_vote       10 0.4836 0.0003 0.4986  0.0015      0.3189       0.4836      226.1               0.0000

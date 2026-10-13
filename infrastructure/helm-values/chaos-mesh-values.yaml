@@ -1,0 +1,39 @@
+# Chaos Mesh Helm Values
+# Controller on monitoring node; daemon on all nodes for fault injection
+
+controllerManager:
+  tolerations:
+    - key: "workload"
+      operator: "Exists"
+      effect: "NoSchedule"
+  nodeSelector:
+    workload: monitoring
+  replicaCount: 1
+
+# Chaos daemon must run on ALL nodes to inject faults
+chaosDaemon:
+  tolerations:
+    - key: "workload"
+      operator: "Exists"
+      effect: "NoSchedule"
+  runtime: containerd
+  socketPath: /run/containerd/containerd.sock
+
+# Dashboard for experiment visibility
+dashboard:
+  tolerations:
+    - key: "workload"
+      operator: "Exists"
+      effect: "NoSchedule"
+  nodeSelector:
+    workload: monitoring
+  securityMode: false
+
+# DNS server for NetworkChaos DNS experiments
+dnsServer:
+  tolerations:
+    - key: "workload"
+      operator: "Exists"
+      effect: "NoSchedule"
+  nodeSelector:
+    workload: monitoring

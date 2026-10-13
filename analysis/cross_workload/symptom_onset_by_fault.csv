@@ -1,0 +1,9 @@
+fault,n_runs,n_with_symptom,median_lag_s,max_lag_s,median_frac_pre_symptom,pct_injection_before_symptom
+F1,10,10,0.0,0,0.0,0.0
+F2,10,10,0.0,30,0.0,0.0
+F3,10,10,0.0,30,0.0,0.0
+F4,10,10,0.0,0,0.0,0.0
+F5,10,10,0.0,0,0.0,0.0
+F6,10,10,0.0,60,0.0,0.0
+F7,10,10,0.0,0,0.0,0.0
+F8,10,10,0.0,30,0.0,0.0

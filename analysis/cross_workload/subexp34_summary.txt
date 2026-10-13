@@ -1,0 +1,37 @@
+SUB-EXP 3: Per-fault F1 Spearman (e-commerce vs IoT, 30s)
+    model  n_faults  spearman_rho  p_value
+       IF         8         0.683   0.0621
+   OC_SVM         8         0.238   0.5702
+  LSTM_AE         8         0.467   0.2433
+ Trans_AE         8         0.850   0.0075
+   CNN_AE         8         0.905   0.0020
+ LSTM_VAE         8         0.898   0.0024
+ DeepSVDD         8         0.524   0.1827
+    DAGMM         8         0.381   0.3518
+       RF         8         0.905   0.0020
+RuleBased         8         0.961   0.0001
+
+SUB-EXP 4: Optimal-window transferability Spearman
+    model  n_faults  spearman_rho  p_value
+       IF         8        -0.510   0.1964
+   OC_SVM         8         0.675   0.0663
+  LSTM_AE         8        -0.248   0.5529
+ Trans_AE         8        -0.093   0.8270
+   CNN_AE         8        -0.064   0.8800
+ LSTM_VAE         8        -0.039   0.9264
+ DeepSVDD         8           NaN      NaN
+    DAGMM         8           NaN      NaN
+       RF         8         0.122   0.7739
+RuleBased         8         0.056   0.8946
+
+Per-fault optimal window per workload:
+workload  ecommerce  iot
+fault_id                
+F1              120   15
+F2              120   30
+F3               15   15
+F4               15  120
+F5               15   60
+F6               15  120
+F7               15   30
+F8               15  300

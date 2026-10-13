@@ -1,0 +1,33 @@
+CHRONOLOGICAL OPERATIONAL REPLAY
+
+Workload: ecommerce, 30s windows, 10 folds, published thresholds.
+Alert episodes merge runs separated by <= 4 quiet windows (2 min on-call deduplication).
+Monitored time is the sum of covered window durations, not the first-to-last span.
+
+Read duty_cycle FIRST. Episode counts only describe a detector that is sometimes
+quiet. A detector alerting most of the time collapses into one unending alert, so
+its false-episode count falls toward zero while it is at its least usable. That is
+the opposite of the analytic FPR x 120 estimate's failure mode, which counts every
+window as a separate page.
+
+  duty_cycle                fraction of monitored windows in an alerting state
+  longest_ep_frac           longest single alert episode, as a fraction of the fold
+  false_alert_min_per_hour  minutes per hour alerting outside any fault
+  analytic_fp_per_hour      the analytic FPR x 120 estimate, for comparison
+  faults_already_firing     fault episodes the detector was already alerting into
+  lag_from_quiet_s          detection lag, only for faults entered from a quiet state
+
+    model  duty_cycle  longest_ep_frac  false_alert_min_per_hour  n_false_episodes  false_eps_per_hour  analytic_fp_per_hour  episode_recall  faults_already_firing  lag_from_quiet_s  always_on
+   CNN_AE       0.891            0.585                    52.672                 0               0.000               105.344           0.962                     69               0.0       True
+       IF       0.964            0.920                    58.442                 0               0.000               116.883           1.000                     80               NaN       True
+RuleBased       1.000            1.000                    60.000                 0               0.000               120.000           1.000                     80               NaN       True
+     EWMA       0.809            0.742                    45.078                 1               0.053                90.156           0.975                     59              30.0       True
+  LSTM_AE       0.885            0.629                    52.279                 1               0.055               104.557           0.950                     65               0.0       True
+ LSTM_VAE       0.886            0.588                    52.336                 1               0.057               104.672           0.962                     69               0.0       True
+ Trans_AE       0.835            0.552                    48.636                 2               0.111                97.272           0.925                     64               0.0       True
+       RF       0.538            0.327                    25.870                 3               0.159                51.740           0.875                     29               0.0       True
+ DeepSVDD       0.896            0.820                    53.196                 4               0.227               106.392           0.988                     68               0.0       True
+   OC_SVM       0.556            0.453                    31.519                 7               0.371                63.039           0.775                     36              30.0       True
+    DAGMM       0.595            0.424                    33.322                11               0.612                66.645           0.812                     41              15.0       True
+
+Episode recall is the fraction of fault episodes with at least one alerting window.

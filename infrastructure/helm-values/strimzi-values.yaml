@@ -1,0 +1,27 @@
+# Strimzi Kafka Operator Helm Values
+# Runs on monitoring node; manages Kafka brokers on kafka nodes
+
+# Operator pod tolerations (runs on monitoring node)
+tolerations:
+  - key: "workload"
+    operator: "Exists"
+    effect: "NoSchedule"
+
+nodeSelector:
+  workload: monitoring
+
+# Watch only the streaming namespace
+watchNamespaces:
+  - streaming
+
+# Resource limits for the operator itself
+resources:
+  requests:
+    cpu: 200m
+    memory: 384Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# Log level
+logLevel: INFO

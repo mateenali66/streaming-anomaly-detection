@@ -1,0 +1,97 @@
+# Flink job watchdog, checks every 5 min, resubmits missing jobs
+# Ensures the pipeline stays up even if the JM restarts
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: flink-job-watchdog
+  namespace: streaming
+spec:
+  schedule: "*/5 * * * *"
+  successfulJobsHistoryLimit: 12
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 120
+      template:
+        spec:
+          tolerations:
+            - key: "workload"
+              value: "monitoring"
+              effect: "NoSchedule"
+          nodeSelector:
+            workload: monitoring
+          serviceAccountName: health-monitor
+          restartPolicy: Never
+          containers:
+            - name: watchdog
+              image: bitnami/kubectl:1.30
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  echo "=== FLINK JOB WATCHDOG $(date -u '+%Y-%m-%dT%H:%M:%SZ') ==="
+
+                  # Find JobManager pod
+                  JM=$(kubectl get pods -n streaming -l app=streaming-flink,component=jobmanager \
+                    --field-selector=status.phase=Running --no-headers \
+                    -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+
+                  if [ -z "$JM" ]; then
+                    echo "ERROR: No Flink JobManager pod found"
+                    exit 0
+                  fi
+
+                  # Count running jobs
+                  RUNNING=$(kubectl exec -n streaming $JM -- \
+                    curl -sf http://localhost:8081/jobs/overview 2>/dev/null | \
+                    grep -o '"state":"RUNNING"' | wc -l | tr -d ' ')
+
+                  echo "Running jobs: $RUNNING/3"
+
+                  if [ "$RUNNING" -ge 3 ]; then
+                    echo "All jobs healthy, nothing to do"
+                    exit 0
+                  fi
+
+                  echo "ALERT: Only $RUNNING/3 jobs running. Checking which are missing..."
+
+                  JOBS_JSON=$(kubectl exec -n streaming $JM -- \
+                    curl -sf http://localhost:8081/jobs/overview 2>/dev/null)
+
+                  HAS_ENRICHMENT=$(echo "$JOBS_JSON" | grep -c "Event Enrichment Job.*RUNNING" || true)
+                  HAS_AGGREGATION=$(echo "$JOBS_JSON" | grep -c "Windowed Aggregation Job.*RUNNING" || true)
+                  HAS_FRAUD=$(echo "$JOBS_JSON" | grep -c "Fraud Detection Job.*RUNNING" || true)
+
+                  if [ "$HAS_ENRICHMENT" -eq 0 ]; then
+                    echo "Resubmitting: Event Enrichment Job"
+                    kubectl exec -n streaming $JM -- \
+                      /opt/flink/bin/flink run -d \
+                      -c com.phonotech.streaming.enrichment.EnrichmentJob \
+                      /opt/flink/usrlib/enrichment.jar 2>&1 || true
+                  fi
+
+                  if [ "$HAS_AGGREGATION" -eq 0 ]; then
+                    echo "Resubmitting: Windowed Aggregation Job"
+                    kubectl exec -n streaming $JM -- \
+                      /opt/flink/bin/flink run -d \
+                      -c com.phonotech.streaming.aggregation.AggregationJob \
+                      /opt/flink/usrlib/aggregation.jar 2>&1 || true
+                  fi
+
+                  if [ "$HAS_FRAUD" -eq 0 ]; then
+                    echo "Resubmitting: Fraud Detection Job"
+                    kubectl exec -n streaming $JM -- \
+                      /opt/flink/bin/flink run -d \
+                      -c com.phonotech.streaming.fraud.FraudDetectionJob \
+                      /opt/flink/usrlib/fraud.jar 2>&1 || true
+                  fi
+
+                  echo "Watchdog complete"
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  cpu: 200m
+                  memory: 128Mi

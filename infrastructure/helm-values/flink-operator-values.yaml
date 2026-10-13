@@ -1,0 +1,33 @@
+# Flink Kubernetes Operator Helm Values
+# Operator runs on monitoring node; manages Flink jobs on flink nodes
+
+# Operator pod placement
+operatorPod:
+  tolerations:
+    - key: "workload"
+      operator: "Exists"
+      effect: "NoSchedule"
+  nodeSelector:
+    workload: monitoring
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 768Mi
+
+# Watch streaming namespace
+watchNamespaces:
+  - streaming
+
+# Webhook disabled (requires cert-manager; not needed for research workload)
+webhook:
+  create: false
+
+# Default Flink configuration (can be overridden per job)
+defaultConfiguration:
+  create: true
+  flink-conf.yaml: |
+    kubernetes.operator.metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
+    kubernetes.operator.metrics.reporter.prom.port: "9249"

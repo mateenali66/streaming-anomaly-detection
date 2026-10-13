@@ -1,0 +1,70 @@
+# Apicurio Schema Registry (ARM-compatible, used in place of the Confluent Schema Registry)
+# Runs on the monitoring node. Uses kafkasql storage, which keeps the schemas
+# in a Kafka topic on the streaming-kafka cluster.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: schema-registry
+  namespace: streaming
+  labels:
+    app: schema-registry
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: schema-registry
+  template:
+    metadata:
+      labels:
+        app: schema-registry
+    spec:
+      tolerations:
+        - key: "workload"
+          value: "monitoring"
+          effect: "NoSchedule"
+      nodeSelector:
+        workload: monitoring
+      containers:
+        - name: apicurio
+          image: apicurio/apicurio-registry:3.0.6
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: APICURIO_STORAGE_KIND
+              value: "kafkasql"
+            - name: APICURIO_KAFKASQL_BOOTSTRAP_SERVERS
+              value: "streaming-kafka-kafka-bootstrap.streaming.svc.cluster.local:9092"
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 768Mi
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: schema-registry
+  namespace: streaming
+spec:
+  selector:
+    app: schema-registry
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http
+  type: ClusterIP

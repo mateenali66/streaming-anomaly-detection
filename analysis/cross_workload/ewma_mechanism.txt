@@ -1,0 +1,124 @@
+WHERE DOES THE EWMA BASELINE'S LEAD COME FROM?
+
+Published EWMA reproduced exactly on all 20 workload-folds (asserted against classical_baselines_per_fold.csv).
+
+Score alignment for per-fault AUC: 200/200 model-folds aligned by label match.
+
+=== A. Saturation bound (mean over folds) ===
+ workload     model   auc  auc_best_case  frac_at_max  frac_normal_at_max  folds
+ecommerce    CNN_AE 0.534          0.566        0.249               0.238     10
+ecommerce     DAGMM 0.572          0.576        0.056               0.029     10
+ecommerce  DeepSVDD 0.543          0.568        0.178               0.155     10
+ecommerce        IF 0.551          0.551        0.004               0.006     10
+ecommerce   LSTM_AE 0.535          0.563        0.224               0.206     10
+ecommerce  LSTM_VAE 0.541          0.570        0.233               0.220     10
+ecommerce    OC_SVM 0.650          0.650        0.004               0.003     10
+ecommerce        RF 0.728          0.728        0.004               0.000     10
+ecommerce RuleBased 0.573          0.573        0.005               0.003     10
+ecommerce  Trans_AE 0.539          0.572        0.247               0.234     10
+      iot    CNN_AE 0.540          0.565        0.210               0.191     10
+      iot     DAGMM 0.583          0.587        0.064               0.041     10
+      iot  DeepSVDD 0.598          0.616        0.169               0.143     10
+      iot        IF 0.601          0.601        0.004               0.004     10
+      iot   LSTM_AE 0.542          0.557        0.163               0.134     10
+      iot  LSTM_VAE 0.542          0.558        0.172               0.148     10
+      iot    OC_SVM 0.614          0.615        0.027               0.010     10
+      iot        RF 0.767          0.767        0.004               0.000     10
+      iot RuleBased 0.612          0.612        0.007               0.001     10
+      iot  Trans_AE 0.568          0.586        0.177               0.152     10
+  ecommerce: best deep-model AUC with every saturated tie broken in its favour = 0.576; published EWMA AUC = 0.650
+  iot: best deep-model AUC with every saturated tie broken in its favour = 0.616; published EWMA AUC = 0.611
+
+=== B. EWMA ablation (mean over 10 folds; d = variant minus published, paired Wilcoxon) ===
+ workload                   variant     f1  f1_se    auc  auc_se  modal_tie  alert_rate   d_auc  p_auc    d_f1   p_f1
+ecommerce                 published 0.5272 0.0038 0.6499  0.0034     0.5307      0.8094     NaN    NaN     NaN    NaN
+ecommerce         centre_train_mean 0.4655 0.0021 0.5152  0.0019     0.2826      0.8815 -0.1347 0.0020 -0.0616 0.0020
+ecommerce            running_centre 0.4824 0.0015 0.4064  0.0065     0.0177      0.9739 -0.2435 0.0020 -0.0448 0.0020
+ecommerce           scale_global_sd 0.4842 0.0011 0.5968  0.0051     0.8067      0.9965 -0.0531 0.0020 -0.0430 0.0020
+ecommerce                  static_z 0.4773 0.0077 0.5681  0.0083     0.1261      0.8690 -0.0819 0.0020 -0.0499 0.0020
+ecommerce              mean_sq_pool 0.5256 0.0035 0.6610  0.0032     0.0044      0.7337  0.0111 0.0020 -0.0015 0.2383
+ecommerce mean_sq_centre_train_mean 0.4813 0.0023 0.5118  0.0026     0.0044      0.9757 -0.1381 0.0020 -0.0458 0.0020
+ecommerce            sigmoid_squash 0.5272 0.0038 0.6497  0.0034     0.5307      0.8094 -0.0002 0.3750  0.0000 1.0000
+ecommerce               scale_floor 0.4842 0.0011 0.5939  0.0048     0.8762      0.9965 -0.0560 0.0020 -0.0430 0.0020
+ecommerce             drop_dominant 0.5300 0.0033 0.6527  0.0032     0.5064      0.8262  0.0028 0.4258  0.0029 0.4062
+      iot                 published 0.5096 0.0029 0.6107  0.0055     0.7452      0.8543     NaN    NaN     NaN    NaN
+      iot         centre_train_mean 0.4846 0.0008 0.4997  0.0023     0.7027      1.0000 -0.1110 0.0020 -0.0250 0.0020
+      iot            running_centre 0.4822 0.0019 0.4105  0.0050     0.0274      0.9863 -0.2001 0.0020 -0.0274 0.0020
+      iot           scale_global_sd 0.4711 0.0058 0.6074  0.0098     0.6529      0.7836 -0.0033 1.0000 -0.0385 0.0020
+      iot                  static_z 0.4775 0.0073 0.6125  0.0109     0.1157      0.6787  0.0018 0.9219 -0.0321 0.0059
+      iot              mean_sq_pool 0.5111 0.0028 0.6322  0.0019     0.0044      0.7098  0.0215 0.0039  0.0015 0.7539
+      iot mean_sq_centre_train_mean 0.4799 0.0046 0.5178  0.0014     0.0044      0.9457 -0.0929 0.0020 -0.0297 0.0039
+      iot            sigmoid_squash 0.5096 0.0029 0.6106  0.0055     0.7452      0.8543 -0.0000 0.3086  0.0000 1.0000
+      iot               scale_floor 0.5125 0.0030 0.6290  0.0095     0.6157      0.9183  0.0184 0.1602  0.0028 0.4766
+      iot             drop_dominant 0.5297 0.0028 0.6387  0.0035     0.0579      0.7337  0.0280 0.0020  0.0201 0.0020
+
+=== C. Per-fault AUC-ROC (mean over folds) ===
+model               CNN_AE  DAGMM  DeepSVDD   EWMA     IF  LSTM_AE  LSTM_VAE  OC_SVM     RF  RuleBased  Trans_AE
+workload  fault_id                                                                                              
+ecommerce F1         0.308  0.391     0.273  0.713  0.323    0.300     0.311   0.636  0.667      0.348     0.303
+          F2         0.334  0.254     0.268  0.713  0.394    0.328     0.321   0.593  0.805      0.381     0.345
+          F3         0.327  0.385     0.355  0.713  0.346    0.333     0.328   0.570  0.761      0.363     0.330
+          F4         0.737  0.772     0.763  0.713  0.834    0.732     0.705   0.830  0.964      0.830     0.733
+          F5         0.472  0.613     0.386  0.384  0.125    0.475     0.483   0.820  0.205      0.212     0.498
+          F6         0.431  0.370     0.576  0.281  0.665    0.433     0.466   0.300  0.570      0.738     0.467
+          F7         0.877  0.908     0.863  0.958  0.984    0.892     0.884   0.731  0.969      0.984     0.879
+          F8         0.862  0.839     0.866  0.530  0.966    0.877     0.871   0.556  0.904      0.956     0.862
+iot       F1         0.312  0.471     0.383  0.668  0.421    0.307     0.307   0.507  0.702      0.432     0.368
+          F2         0.292  0.400     0.338  0.584  0.448    0.279     0.316   0.558  0.787      0.462     0.336
+          F3         0.283  0.292     0.389  0.584  0.393    0.292     0.301   0.590  0.711      0.457     0.344
+          F4         0.722  0.677     0.825  0.584  0.852    0.719     0.699   0.627  0.965      0.852     0.737
+          F5         0.634  0.680     0.605  0.584  0.428    0.624     0.632   0.612  0.489      0.469     0.658
+          F6         0.339  0.504     0.467  0.584  0.421    0.310     0.286   0.451  0.602      0.296     0.282
+          F7         0.882  0.881     0.888  0.900  0.966    0.907     0.902   0.922  0.962      0.975     0.901
+          F8         0.889  0.855     0.886  0.230  0.978    0.914     0.906   0.525  0.953      0.970     0.902
+
+=== D. Category of EWMA's arg-max feature on flagged fault windows and false alarms ===
+  ecommerce feature-space share: broker 0.08, consumer 0.23, flink 0.19, jvm 0.49
+  iot feature-space share: broker 0.11, consumer 0.19, flink 0.16, jvm 0.54
+category                          broker  consumer  flink   jvm
+workload  kind          fault_id                               
+ecommerce false_alarm   (normal)    0.10      0.03   0.01  0.86
+          flagged_fault F1          0.00      0.00   0.00  1.00
+                        F2          0.00      0.00   0.00  1.00
+                        F3          0.00      0.00   0.00  1.00
+                        F4          0.00      0.00   0.00  1.00
+                        F5          0.67      0.00   0.00  0.33
+                        F6          0.00      0.00   0.00  1.00
+                        F7          0.00      0.80   0.18  0.02
+                        F8          0.00      0.94   0.03  0.03
+iot       false_alarm   (normal)    0.98      0.02   0.00  0.00
+          flagged_fault F1          1.00      0.00   0.00  0.00
+                        F2          1.00      0.00   0.00  0.00
+                        F3          1.00      0.00   0.00  0.00
+                        F4          1.00      0.00   0.00  0.00
+                        F5          1.00      0.00   0.00  0.00
+                        F6          1.00      0.00   0.00  0.00
+                        F7          0.08      0.76   0.16  0.00
+                        F8          0.00      0.78   0.22  0.00
+
+=== E. Deep models minus the static max-z diagnostic (paired over folds, Holm over six) ===
+ workload   metric    model  model_mean  maxz_mean   delta     se      p  p_holm
+ecommerce  auc_roc  LSTM_AE      0.5354     0.5730 -0.0376 0.0153 0.0195  0.0781
+ecommerce  auc_roc Trans_AE      0.5394     0.5730 -0.0335 0.0137 0.0273  0.0820
+ecommerce  auc_roc   CNN_AE      0.5336     0.5730 -0.0394 0.0133 0.0020  0.0117
+ecommerce  auc_roc LSTM_VAE      0.5406     0.5730 -0.0324 0.0111 0.0137  0.0684
+ecommerce  auc_roc DeepSVDD      0.5429     0.5730 -0.0301 0.0116 0.0371  0.0820
+ecommerce  auc_roc    DAGMM      0.5722     0.5730 -0.0008 0.0279 0.9219  0.9219
+ecommerce f1_score  LSTM_AE      0.4908     0.4836  0.0072 0.0130 0.3613  1.0000
+ecommerce f1_score Trans_AE      0.4957     0.4836  0.0121 0.0096 0.2754  1.0000
+ecommerce f1_score   CNN_AE      0.4898     0.4836  0.0063 0.0130 0.3105  1.0000
+ecommerce f1_score LSTM_VAE      0.4880     0.4836  0.0044 0.0096 0.6250  1.0000
+ecommerce f1_score DeepSVDD      0.4820     0.4836 -0.0016 0.0126 0.4316  1.0000
+ecommerce f1_score    DAGMM      0.4716     0.4836 -0.0120 0.0159 1.0000  1.0000
+      iot  auc_roc  LSTM_AE      0.5424     0.6123 -0.0699 0.0149 0.0039  0.0195
+      iot  auc_roc Trans_AE      0.5684     0.6123 -0.0439 0.0115 0.0098  0.0293
+      iot  auc_roc   CNN_AE      0.5405     0.6123 -0.0718 0.0078 0.0020  0.0117
+      iot  auc_roc LSTM_VAE      0.5416     0.6123 -0.0707 0.0123 0.0039  0.0195
+      iot  auc_roc DeepSVDD      0.5981     0.6123 -0.0143 0.0135 0.5566  0.5566
+      iot  auc_roc    DAGMM      0.5832     0.6123 -0.0292 0.0215 0.2324  0.4648
+      iot f1_score  LSTM_AE      0.4870     0.4846  0.0024 0.0049 0.5547  1.0000
+      iot f1_score Trans_AE      0.4863     0.4846  0.0017 0.0104 0.6250  1.0000
+      iot f1_score   CNN_AE      0.4835     0.4846 -0.0011 0.0091 0.9023  1.0000
+      iot f1_score LSTM_VAE      0.4853     0.4846  0.0007 0.0117 0.7500  1.0000
+      iot f1_score DeepSVDD      0.4808     0.4846 -0.0038 0.0146 0.9219  1.0000
+      iot f1_score    DAGMM      0.5064     0.4846  0.0218 0.0083 0.0352  0.2109

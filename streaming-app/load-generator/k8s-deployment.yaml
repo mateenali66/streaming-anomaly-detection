@@ -1,0 +1,45 @@
+# Load generator deployment (ECR image)
+# THROUGHPUT_PROFILE=ULTRA_LOW gives 500 events/s, the rate of the Phase B run.
+# The default profile, MEDIUM, gives the 5,000 events/s of the Phase A run.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: load-generator
+  namespace: streaming
+  labels:
+    app: load-generator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: load-generator
+  template:
+    metadata:
+      labels:
+        app: load-generator
+    spec:
+      tolerations:
+        - key: "workload"
+          value: "monitoring"
+          effect: "NoSchedule"
+      nodeSelector:
+        workload: monitoring
+      containers:
+        - name: generator
+          image: ACCOUNT_ID.dkr.ecr.us-east-2.amazonaws.com/stream-ad-bench/load-generator:v2-phase-b
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: "streaming-kafka-kafka-bootstrap.streaming.svc.cluster.local:9092"
+            - name: KAFKA_TOPIC
+              value: "raw-events"
+            - name: THROUGHPUT_PROFILE
+              value: "ULTRA_LOW"
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi

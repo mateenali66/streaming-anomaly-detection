@@ -1,0 +1,35 @@
+RQ2 ON A MATCHED EVALUATION SET
+
+All models scored on the same windows: the temporally contiguous sequence
+end-points at length 11. Point-model scores are the published ones,
+restricted to those rows. Prevalence is therefore identical within a fold.
+
+=== ecommerce ===
+ workload    family     model  n_folds  auc_mean  auc_se  prevalence  n_windows
+ecommerce reference        RF       10    0.7014  0.0141      0.4935      146.1
+ecommerce     point    OC_SVM       10    0.5906  0.0202      0.4935      146.1
+ecommerce     point        IF       10    0.5661  0.0071      0.4935      146.1
+ecommerce reference RuleBased       10    0.5617  0.0073      0.4935      146.1
+ecommerce  sequence     DAGMM       10    0.5609  0.0152      0.4884      147.7
+ecommerce  sequence  DeepSVDD       10    0.5439  0.0092      0.4909      146.9
+ecommerce  sequence   LSTM_AE       10    0.5042  0.0148      0.4935      146.1
+ecommerce  sequence  Trans_AE       10    0.5012  0.0151      0.4935      146.1
+ecommerce  sequence    CNN_AE       10    0.5011  0.0138      0.4909      146.9
+ecommerce  sequence  LSTM_VAE       10    0.5004  0.0150      0.4909      146.9
+
+best sequence minus best point, paired over 10 folds: mean -0.0283 (SE 0.0200), Wilcoxon p = 0.1934
+
+=== iot ===
+workload    family     model  n_folds  auc_mean  auc_se  prevalence  n_windows
+     iot reference        RF       10    0.7464  0.0059      0.4945      146.4
+     iot     point        IF       10    0.5730  0.0106      0.4945      146.4
+     iot     point    OC_SVM       10    0.5657  0.0215      0.4945      146.4
+     iot reference RuleBased       10    0.5569  0.0082      0.4945      146.4
+     iot  sequence  DeepSVDD       10    0.5325  0.0069      0.4945      146.4
+     iot  sequence     DAGMM       10    0.5049  0.0223      0.4945      146.4
+     iot  sequence  Trans_AE       10    0.5038  0.0091      0.4920      147.2
+     iot  sequence  LSTM_VAE       10    0.4961  0.0116      0.4945      146.4
+     iot  sequence   LSTM_AE       10    0.4936  0.0150      0.4945      146.4
+     iot  sequence    CNN_AE       10    0.4884  0.0164      0.4945      146.4
+
+best sequence minus best point, paired over 10 folds: mean -0.0282 (SE 0.0168), Wilcoxon p = 0.1055

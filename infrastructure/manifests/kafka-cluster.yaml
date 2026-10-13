@@ -1,0 +1,183 @@
+# Strimzi Kafka Cluster (KRaft mode, 3 brokers)
+# Each broker scheduled on a dedicated kafka node via tolerations + affinity
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaNodePool
+metadata:
+  name: brokers
+  namespace: streaming
+  labels:
+    strimzi.io/cluster: streaming-kafka
+spec:
+  replicas: 3
+  roles:
+    - controller
+    - broker
+  storage:
+    type: persistent-claim
+    size: 200Gi
+    class: gp3
+    deleteClaim: true
+  template:
+    pod:
+      tolerations:
+        - key: "workload"
+          value: "kafka"
+          effect: "NoSchedule"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: workload
+                    operator: In
+                    values:
+                      - kafka
+        # Anti-affinity: 1 broker per node for page cache isolation
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  strimzi.io/cluster: streaming-kafka
+                  strimzi.io/kind: Kafka
+              topologyKey: kubernetes.io/hostname
+  resources:
+    requests:
+      cpu: "1"
+      memory: 8Gi
+    limits:
+      cpu: "3"
+      memory: 24Gi
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: Kafka
+metadata:
+  name: streaming-kafka
+  namespace: streaming
+  annotations:
+    strimzi.io/kraft: enabled
+    strimzi.io/node-pools: enabled
+spec:
+  kafka:
+    version: 3.9.0
+    metadataVersion: "3.9-IV0"
+    listeners:
+      - name: plain
+        port: 9092
+        type: internal
+        tls: false
+      - name: tls
+        port: 9093
+        type: internal
+        tls: true
+    config:
+      # Replication & durability
+      offsets.topic.replication.factor: 3
+      transaction.state.log.replication.factor: 3
+      transaction.state.log.min.isr: 2
+      default.replication.factor: 3
+      min.insync.replicas: 2
+      # Performance
+      num.partitions: 12
+      log.retention.hours: 2
+      log.segment.bytes: 536870912
+      log.retention.check.interval.ms: 60000
+      log.cleaner.enable: true
+      # Disk safety: warn at 85%, reject writes at 95%
+      log.retention.bytes: 10000000000
+      # Metrics
+      auto.create.topics.enable: false
+    metricsConfig:
+      type: jmxPrometheusExporter
+      valueFrom:
+        configMapKeyRef:
+          name: kafka-metrics-config
+          key: kafka-metrics-config.yml
+    jvmOptions:
+      -Xms: 4096m
+      -Xmx: 4096m
+  entityOperator:
+    template:
+      pod:
+        tolerations:
+          - key: "workload"
+            operator: "Exists"
+            effect: "NoSchedule"
+    topicOperator:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+    userOperator:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+---
+# JMX Prometheus Exporter config for Kafka metrics
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-metrics-config
+  namespace: streaming
+data:
+  kafka-metrics-config.yml: |
+    lowercaseOutputName: true
+    lowercaseOutputLabelNames: true
+    rules:
+      # Broker metrics
+      - pattern: kafka.server<type=BrokerTopicMetrics, name=(.+), topic=(.+)><>Count
+        name: kafka_server_brokertopicmetrics_$1_total
+        labels:
+          topic: $2
+        type: COUNTER
+      - pattern: kafka.server<type=BrokerTopicMetrics, name=(.+)><>Count
+        name: kafka_server_brokertopicmetrics_$1_total
+        type: COUNTER
+      # Request metrics
+      - pattern: kafka.network<type=RequestMetrics, name=(.+), request=(.+), error=(.+)><>Count
+        name: kafka_network_requestmetrics_$1_total
+        labels:
+          request: $2
+          error: $3
+        type: COUNTER
+      - pattern: kafka.network<type=RequestMetrics, name=(.+), request=(.+)><>Count
+        name: kafka_network_requestmetrics_$1_total
+        labels:
+          request: $2
+        type: COUNTER
+      # Under-replicated partitions
+      - pattern: kafka.server<type=ReplicaManager, name=UnderReplicatedPartitions><>Value
+        name: kafka_server_replicamanager_underreplicatedpartitions
+        type: GAUGE
+      - pattern: kafka.server<type=ReplicaManager, name=UnderMinIsrPartitionCount><>Value
+        name: kafka_server_replicamanager_underminisrpartitioncount
+        type: GAUGE
+      # ISR metrics
+      - pattern: kafka.server<type=ReplicaManager, name=IsrShrinksPerSec><>Count
+        name: kafka_server_replicamanager_isrshrinks_total
+        type: COUNTER
+      - pattern: kafka.server<type=ReplicaManager, name=IsrExpandsPerSec><>Count
+        name: kafka_server_replicamanager_isrexpands_total
+        type: COUNTER
+      # Partition count
+      - pattern: kafka.server<type=ReplicaManager, name=PartitionCount><>Value
+        name: kafka_server_replicamanager_partitioncount
+        type: GAUGE
+      # Controller metrics
+      - pattern: kafka.controller<type=KafkaController, name=(.+)><>Value
+        name: kafka_controller_kafkacontroller_$1
+        type: GAUGE
+      # Log flush
+      - pattern: kafka.log<type=LogFlushStats, name=LogFlushRateAndTimeMs><>Count
+        name: kafka_log_logflushstats_logflushrateandtimems_total
+        type: COUNTER
+      # Consumer group lag (via __consumer_offsets)
+      - pattern: kafka.server<type=FetcherLagMetrics, name=ConsumerLag, clientId=(.+), topic=(.+), partition=(.+)><>Value
+        name: kafka_server_fetcherlagmetrics_consumerlag
+        labels:
+          client_id: $1
+          topic: $2
+          partition: $3
+        type: GAUGE
+      # JVM metrics are provided by Strimzi's built-in JVM collector
+      # Do NOT add custom java.lang rules here (causes duplicate metric errors)

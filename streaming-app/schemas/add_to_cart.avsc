@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "AddToCart",
+  "namespace": "com.phonotech.streaming.events",
+  "fields": [
+    {"name": "event_id", "type": "string"},
+    {"name": "user_id", "type": "string"},
+    {"name": "product_id", "type": "string"},
+    {"name": "session_id", "type": "string"},
+    {"name": "timestamp", "type": {"type": "long", "logicalType": "timestamp-millis"}},
+    {"name": "quantity", "type": "int"},
+    {"name": "unit_price", "type": {"type": "bytes", "logicalType": "decimal", "precision": 10, "scale": 2}},
+    {"name": "ip_address", "type": "string"}
+  ]
+}

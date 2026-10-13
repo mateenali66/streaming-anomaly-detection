@@ -1,0 +1,15 @@
+PER-FAULT DIFFICULTY-RANK TRANSFER, E-COMMERCE vs IoT, 30s, N = 8 FAULTS
+rho_auc: Spearman on per-fault AUC-ROC (this script); rho_f1_published: Spearman on per-fault F1 (subexp3)
+
+    model  n_faults  rho_auc  p_auc  rho_f1_published
+       RF         8    0.976  0.000             0.905
+ DeepSVDD         8    0.952  0.000             0.524
+   CNN_AE         8    0.905  0.002             0.905
+  LSTM_AE         8    0.905  0.002             0.467
+    DAGMM         8    0.857  0.007             0.381
+       IF         8    0.762  0.028             0.683
+ LSTM_VAE         8    0.762  0.028             0.898
+   OC_SVM         8    0.762  0.028             0.238
+ Trans_AE         8    0.738  0.037             0.850
+     EWMA         8    0.625  0.098               NaN
+RuleBased         8    0.619  0.102             0.961

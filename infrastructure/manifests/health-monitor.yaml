@@ -1,0 +1,134 @@
+# In-cluster health monitor. Runs every 10 min and sends an SNS alert if the pipeline is degraded.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: pipeline-health-monitor
+  namespace: streaming
+spec:
+  schedule: "*/10 * * * *"
+  successfulJobsHistoryLimit: 48
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 120
+      template:
+        spec:
+          tolerations:
+            - key: "workload"
+              value: "monitoring"
+              effect: "NoSchedule"
+          nodeSelector:
+            workload: monitoring
+          serviceAccountName: health-monitor
+          restartPolicy: Never
+          containers:
+            - name: monitor
+              image: amazon/aws-cli:2.22.35
+              env:
+                - name: SNS_TOPIC_ARN
+                  value: "arn:aws:sns:us-east-2:ACCOUNT_ID:stream-ad-bench-alerts"
+                - name: AWS_DEFAULT_REGION
+                  value: "us-east-2"
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  # Install kubectl
+                  curl -sLO "https://dl.k8s.io/release/v1.30.0/bin/linux/arm64/kubectl" && chmod +x kubectl && mv kubectl /usr/local/bin/
+
+                  echo "=== HEALTH CHECK $(date -u '+%Y-%m-%dT%H:%M:%SZ') ==="
+                  DEGRADED=0
+                  MSG=""
+
+                  # Kafka
+                  KAFKA_READY=$(kubectl get kafka streaming-kafka -n streaming -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null)
+                  BROKER_COUNT=$(kubectl get pods -n streaming -l strimzi.io/component-type=kafka --field-selector=status.phase=Running --no-headers 2>/dev/null | wc -l | tr -d ' ')
+                  echo "Kafka: Ready=$KAFKA_READY Brokers=$BROKER_COUNT/3"
+                  if [ "$KAFKA_READY" != "True" ] || [ "$BROKER_COUNT" -lt 3 ]; then
+                    DEGRADED=1
+                    MSG="${MSG}Kafka: $BROKER_COUNT/3 brokers. "
+                  fi
+
+                  # Flink
+                  JM=$(kubectl get pods -n streaming -l app=streaming-flink,component=jobmanager --field-selector=status.phase=Running --no-headers -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+                  RUNNING=0
+                  if [ -n "$JM" ]; then
+                    RUNNING=$(kubectl exec -n streaming $JM -- curl -sf http://localhost:8081/jobs/overview 2>/dev/null | grep -o '"state":"RUNNING"' | wc -l | tr -d ' ')
+                  fi
+                  echo "Flink: $RUNNING/3 jobs running"
+                  if [ "$RUNNING" -lt 3 ]; then
+                    DEGRADED=1
+                    MSG="${MSG}Flink: $RUNNING/3 jobs. "
+                  fi
+
+                  # Load generator
+                  LG_PODS=$(kubectl get pods -n streaming -l app=load-generator --field-selector=status.phase=Running --no-headers 2>/dev/null | wc -l | tr -d ' ')
+                  echo "LoadGen: $LG_PODS running"
+                  if [ "$LG_PODS" -lt 1 ]; then
+                    DEGRADED=1
+                    MSG="${MSG}LoadGen down. "
+                  fi
+
+                  # Prometheus
+                  PROM=$(kubectl get pods -n observability -l app.kubernetes.io/name=prometheus --field-selector=status.phase=Running --no-headers 2>/dev/null | wc -l | tr -d ' ')
+                  echo "Prometheus: $PROM/1 running"
+                  if [ "$PROM" -lt 1 ]; then
+                    DEGRADED=1
+                    MSG="${MSG}Prometheus down. "
+                  fi
+
+                  # Verdict
+                  if [ "$DEGRADED" -eq 1 ]; then
+                    echo "VERDICT: DEGRADED, sending SNS alert"
+                    aws sns publish \
+                      --topic-arn "$SNS_TOPIC_ARN" \
+                      --message "ALERT: Pipeline degraded. ${MSG}Check cluster stream-ad-bench." \
+                      --subject "StreamAD Alert" 2>&1 || echo "SNS publish failed"
+                  else
+                    echo "VERDICT: HEALTHY"
+                  fi
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+                limits:
+                  cpu: 500m
+                  memory: 256Mi
+                  ephemeral-storage: 500Mi
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: health-monitor
+  namespace: streaming
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/stream-ad-bench-alerter
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: health-monitor
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create"]
+  - apiGroups: ["kafka.strimzi.io"]
+    resources: ["kafkas"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: health-monitor
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: health-monitor
+subjects:
+  - kind: ServiceAccount
+    name: health-monitor
+    namespace: streaming

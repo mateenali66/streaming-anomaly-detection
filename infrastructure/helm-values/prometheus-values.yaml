@@ -1,0 +1,141 @@
+# kube-prometheus-stack Helm Values
+# All monitoring components run on the monitoring node
+
+# Global tolerations
+global:
+  tolerations:
+    - key: "workload"
+      operator: "Exists"
+      effect: "NoSchedule"
+
+# Prometheus server
+prometheus:
+  prometheusSpec:
+    tolerations:
+      - key: "workload"
+        operator: "Exists"
+        effect: "NoSchedule"
+    nodeSelector:
+      workload: monitoring
+    priorityClassName: monitoring-critical
+    retention: 30d
+    scrapeInterval: 10s
+    evaluationInterval: 10s
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: gp3
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 100Gi
+    # Monitor all namespaces
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    # Additional scrape configs for Kafka JMX and Flink metrics
+    additionalScrapeConfigs:
+      # Kafka broker JMX metrics (Strimzi exposes on port 9404)
+      - job_name: kafka-brokers
+        scrape_interval: 10s
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - streaming
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_strimzi_io_component_type]
+            regex: kafka
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: kafka_broker
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+          - source_labels: [__meta_kubernetes_pod_ip]
+            target_label: __address__
+            replacement: $1:9404
+        metrics_path: /metrics
+      # Flink TaskManager/JobManager metrics (port 9249)
+      - job_name: flink-metrics
+        scrape_interval: 10s
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - streaming
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            regex: streaming-flink
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_label_component]
+            target_label: flink_component
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+          - source_labels: [__meta_kubernetes_pod_ip]
+            target_label: __address__
+            replacement: $1:9249
+        metrics_path: /
+
+# Grafana
+grafana:
+  enabled: true
+  tolerations:
+    - key: "workload"
+      operator: "Exists"
+      effect: "NoSchedule"
+  nodeSelector:
+    workload: monitoring
+  adminPassword: ""  # set at deploy time via --set or a Kubernetes secret
+  persistence:
+    enabled: true
+    storageClassName: gp3
+    size: 10Gi
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: default
+          orgId: 1
+          folder: ''
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/default
+
+# Prometheus Operator
+prometheusOperator:
+  tolerations:
+    - key: "workload"
+      operator: "Exists"
+      effect: "NoSchedule"
+  nodeSelector:
+    workload: monitoring
+  admissionWebhooks:
+    patch:
+      tolerations:
+        - key: "workload"
+          operator: "Exists"
+          effect: "NoSchedule"
+      nodeSelector:
+        workload: monitoring
+
+# Alertmanager (disabled, pipeline alerts come from the health-monitor CronJob through SNS)
+alertmanager:
+  enabled: false
+
+# Node exporter (runs on all nodes)
+nodeExporter:
+  enabled: true
+  tolerations:
+    - key: "workload"
+      operator: "Exists"
+      effect: "NoSchedule"
+
+# kube-state-metrics
+kube-state-metrics:
+  tolerations:
+    - key: "workload"
+      operator: "Exists"
+      effect: "NoSchedule"
+  nodeSelector:
+    workload: monitoring

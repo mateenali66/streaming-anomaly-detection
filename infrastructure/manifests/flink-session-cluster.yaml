@@ -1,0 +1,96 @@
+# Flink Session Cluster (managed by Flink Kubernetes Operator)
+# JobManager on flink node, 3 TaskManagers on flink nodes
+apiVersion: flink.apache.org/v1beta1
+kind: FlinkDeployment
+metadata:
+  name: streaming-flink
+  namespace: streaming
+spec:
+  image: ACCOUNT_ID.dkr.ecr.us-east-2.amazonaws.com/stream-ad-bench/flink-jobs:v3-iot
+  flinkVersion: v1_19
+  flinkConfiguration:
+    # Checkpointing
+    execution.checkpointing.interval: "60000"
+    execution.checkpointing.mode: EXACTLY_ONCE
+    execution.checkpointing.timeout: "120000"
+    execution.checkpointing.min-pause: "30000"
+    # State backend (RocksDB with incremental checkpoints)
+    state.backend.type: rocksdb
+    state.backend.incremental: "true"
+    state.checkpoints.dir: file:///opt/flink/checkpoints
+    state.savepoints.dir: file:///opt/flink/savepoints
+    # JVM args for Java 17 module access (Kryo serialization)
+    env.java.opts.all: "--add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.lang.invoke=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.nio=ALL-UNNAMED --add-opens java.base/sun.nio.ch=ALL-UNNAMED --add-opens java.base/sun.security.ssl=ALL-UNNAMED"
+    # Restart strategy
+    restart-strategy.type: fixed-delay
+    restart-strategy.fixed-delay.attempts: "10"
+    restart-strategy.fixed-delay.delay: "30s"
+    # Metrics (Prometheus reporter)
+    metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
+    metrics.reporter.prom.port: "9249"
+    # Parallelism
+    parallelism.default: "4"
+    # TaskManager memory
+    taskmanager.memory.process.size: "8192m"
+    taskmanager.memory.managed.fraction: "0.4"
+    taskmanager.numberOfTaskSlots: "4"
+    # Network buffers (important for backpressure visibility)
+    taskmanager.network.memory.fraction: "0.1"
+    taskmanager.network.memory.min: "64mb"
+    taskmanager.network.memory.max: "1gb"
+  serviceAccount: flink
+  podTemplate:
+    spec:
+      tolerations:
+        - key: "workload"
+          value: "flink"
+          effect: "NoSchedule"
+      nodeSelector:
+        workload: flink
+  jobManager:
+    resource:
+      memory: "4096m"
+      cpu: 1
+    replicas: 1
+    podTemplate:
+      spec:
+        tolerations:
+          - key: "workload"
+            value: "flink"
+            effect: "NoSchedule"
+        nodeSelector:
+          workload: flink
+  taskManager:
+    resource:
+      memory: "8192m"
+      cpu: 2
+    replicas: 3
+    podTemplate:
+      spec:
+        tolerations:
+          - key: "workload"
+            value: "flink"
+            effect: "NoSchedule"
+        nodeSelector:
+          workload: flink
+        # Anti-affinity is not required (2 nodes, 3 TMs, some will colocate)
+---
+# Service account for Flink
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: flink
+  namespace: streaming
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: flink-role-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: edit
+subjects:
+  - kind: ServiceAccount
+    name: flink
+    namespace: streaming

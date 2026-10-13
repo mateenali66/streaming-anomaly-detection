@@ -1,0 +1,121 @@
+# In-cluster Campaign Orchestrator Job
+# Runs faults F5 to F8 with 10 repetitions each, 40 fault injection runs in total.
+# Remove the --fault flags below to run all 8 faults (80 runs).
+# Runs inside the cluster, so it does not depend on a local session.
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: campaign-orchestrator
+  namespace: streaming
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: campaign-orchestrator
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services"]
+    verbs: ["get", "list", "watch", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create", "get"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "patch", "update"]
+  - apiGroups: ["flink.apache.org"]
+    resources: ["flinkdeployments"]
+    verbs: ["get", "list", "patch", "update"]
+  - apiGroups: ["chaos-mesh.org"]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["get", "list", "create", "delete"]
+  - apiGroups: ["kafka.strimzi.io"]
+    resources: ["kafkas", "kafkatopics"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: campaign-orchestrator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: campaign-orchestrator
+subjects:
+  - kind: ServiceAccount
+    name: campaign-orchestrator
+    namespace: streaming
+---
+# PVC to persist campaign manifest (survives job restarts)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: campaign-manifest
+  namespace: streaming
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: gp3
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: campaign-orchestrator
+  namespace: streaming
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 172800  # 48h max
+  template:
+    spec:
+      tolerations:
+        - key: "workload"
+          value: "monitoring"
+          effect: "NoSchedule"
+      nodeSelector:
+        workload: monitoring
+      serviceAccountName: campaign-orchestrator
+      restartPolicy: Never
+      containers:
+        - name: orchestrator
+          image: python:3.12-slim
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              # Install kubectl
+              apt-get update -qq && apt-get install -y -qq curl
+              curl -sLO "https://dl.k8s.io/release/v1.30.0/bin/linux/arm64/kubectl"
+              chmod +x kubectl && mv kubectl /usr/local/bin/
+              echo "=== Starting Campaign Orchestrator (F5 to F8) ==="
+              python3 -u /scripts/campaign_orchestrator.py \
+                --baseline-stats /scripts/orchestrator_stats.json \
+                --manifest /manifest/campaign_manifest_v2.json \
+                --prometheus http://prometheus-kube-prometheus-prometheus.observability.svc.cluster.local:9090 \
+                --fault F5 --fault F6 --fault F7 --fault F8
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+            - name: manifest
+              mountPath: /manifest
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+              ephemeral-storage: 2Gi
+            limits:
+              cpu: "1"
+              memory: 2Gi
+              ephemeral-storage: 5Gi
+      volumes:
+        - name: scripts
+          configMap:
+            name: campaign-orchestrator-script
+        - name: manifest
+          persistentVolumeClaim:
+            claimName: campaign-manifest
