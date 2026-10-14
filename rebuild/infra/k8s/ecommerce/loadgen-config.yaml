@@ -1,0 +1,20 @@
+# Settings read by streaming-app/load-generator/config.py. R1's e-commerce YAML said ULTRA_LOW (500/s) while the measured
+# rate was about 992/s (REBUILD_INFRA_AUDIT 0.2 item 7). The rebuild takes the measured value: LOW = 1000 events/s, +/-20% over
+# a 1800 s sinusoid. The author confirms this choice before the pilot (README, open items).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loadgen-config
+  namespace: streaming
+  labels:
+    infra.phase: load
+data:
+  WORKLOAD: "ECOMMERCE"
+  THROUGHPUT_PROFILE: "LOW"
+  SINUSOIDAL_AMPLITUDE: "0.2"
+  SINUSOIDAL_PERIOD_SEC: "1800"
+  NUM_USERS: "10000"
+  NUM_PRODUCTS: "500"
+  NUM_SESSIONS: "2000"
+  PRODUCER_ACKS: "all"
+  PRODUCER_COMPRESSION: "lz4"

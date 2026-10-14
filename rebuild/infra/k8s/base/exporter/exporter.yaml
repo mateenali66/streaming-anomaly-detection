@@ -1,0 +1,13 @@
+# Metric exporter identity (REVIEW3 A9, F; protocol 11.7 and 11.11). The orchestrator creates every exporter Job itself:
+# export-<attempt_key> after each attempt, export-baseline-<chunk_start> for every hour of WARMUP and BASELINE, and
+# export-trailing-<chunk_start> for the trailing baseline, all with this ServiceAccount and the orchestrator image
+# (command `export`). infra's earlier suspended Job export-baseline and its 50 Gi scratch volume are gone (rebuild/
+# CONTRACT_CHANGES.md C11): one 24 h export would have left the orchestrator's chunk layout and its write-once rule.
+# The ServiceAccount is bound to the Pod Identity role that can write ONLY campaign/<id>/baseline/* and campaign/<id>/export/*
+# (it can never write the COMPLETE marker). No Kubernetes API token is mounted.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: metric-exporter
+  namespace: streaming
+automountServiceAccountToken: false

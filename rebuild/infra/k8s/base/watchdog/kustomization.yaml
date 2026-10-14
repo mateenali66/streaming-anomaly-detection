@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# The alert-only watchdog: its CronJob and the script as ConfigMap campaign-watchdog (no name hash, phase run).
+resources:
+  - watchdog-cronjob.yaml
+configMapGenerator:
+  - name: campaign-watchdog
+    namespace: streaming
+    files:
+      - watchdog.py
+    options:
+      disableNameSuffixHash: true
+      labels:
+        app: campaign-watchdog
+        infra.phase: run

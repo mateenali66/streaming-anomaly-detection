@@ -1,0 +1,9 @@
+# Interpreter for every helper that reads or writes AWS. The AWS CLI on the author's machine is an x86 binary that does not run,
+# so these are boto3 scripts. boto3/botocore >= 1.34.41 is the EKS Pod Identity minimum; these pins are what the scripts were tested with.
+boto3==1.40.0
+botocore==1.40.76
+s3transfer==0.13.1
+jmespath==1.1.0
+python-dateutil==2.9.0.post0
+urllib3==2.8.0
+PyYAML==6.0.3

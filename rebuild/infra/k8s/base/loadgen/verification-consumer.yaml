@@ -1,0 +1,83 @@
+# Verification consumer (protocol 2.3 item 8). A separate consumer group (rebuild-verification, 11.11) on raw-events and
+# dead-letter that counts malformed records in total and per rebuild-attempt header, so F6 is verified from outside the Flink
+# jobs and attributed to its attempt (rebuild/CONTRACT_CHANGES.md C6). It runs from warm-up through the trailing baseline, so
+# its fetch traffic is in every phase of every run type. Code: orchestrator/consumer_service.py in the orchestrator image,
+# command `consumer`. /status (JSON) and /metrics (verify_consumer_records_total, verify_consumer_malformed_total) on 9103 (C7).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: verification-consumer
+  namespace: streaming
+  labels:
+    app: verification-consumer
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: verification-consumer
+  template:
+    metadata:
+      labels:
+        app: verification-consumer
+    spec:
+      tolerations:
+        - key: "workload"
+          value: "monitoring"
+          effect: "NoSchedule"
+      nodeSelector:
+        workload: monitoring
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+      containers:
+        - name: consumer
+          image: ${REF_ORCHESTRATOR}
+          args: ["consumer"]
+          env:
+            - name: WORKLOAD
+              valueFrom:
+                configMapKeyRef:
+                  name: workload-config
+                  key: WORKLOAD
+            - name: KAFKA_BOOTSTRAP
+              value: streaming-kafka-kafka-bootstrap.streaming.svc.cluster.local:9092
+            - name: KAFKA_GROUP_ID
+              value: rebuild-verification
+            - name: METRICS_PORT
+              value: "9103"
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
+            - name: HOME
+              value: /tmp
+          ports:
+            - name: metrics
+              containerPort: 9103
+          readinessProbe:
+            httpGet:
+              path: /status
+              port: metrics
+            periodSeconds: 10
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 512Mi

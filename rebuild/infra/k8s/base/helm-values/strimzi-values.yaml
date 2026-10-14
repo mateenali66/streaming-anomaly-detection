@@ -1,0 +1,48 @@
+# Strimzi 0.45.2 (Kafka 3.8.0 to 3.9.2, tested on Kubernetes 1.25 to 1.35: https://strimzi.io/downloads/).
+# Rendered by Terraform templatefile() and by scripts/render_values.sh. dollar-brace NAME placeholders come from images.lock.yaml
+# (see scripts/lock_env.py). Do not add any other dollar-brace text to this file.
+#
+# Docs relied on (context7 /strimzi/strimzi-kafka-operator, checked 13 Oct 2026): chart values defaultImageRegistry,
+# defaultImageRepository, defaultImageTag and the per-component image.tag, watchNamespaces, KafkaNodePool.
+#
+# Every image comes from ECR, by immutable tag AND digest ("tag@sha256:..."), so nothing pulls from quay.io at run time.
+defaultImageRegistry: ${ECR_REGISTRY}
+defaultImageRepository: ${ECR_PREFIX}/mirror/strimzi
+defaultImageTag: ${TAG_STRIMZI_OPERATOR}
+
+image:
+  name: operator
+  tag: "${TAG_STRIMZI_OPERATOR}@${DIGEST_STRIMZI_OPERATOR}"
+topicOperator:
+  image:
+    name: operator
+    tag: "${TAG_STRIMZI_OPERATOR}@${DIGEST_STRIMZI_OPERATOR}"
+userOperator:
+  image:
+    name: operator
+    tag: "${TAG_STRIMZI_OPERATOR}@${DIGEST_STRIMZI_OPERATOR}"
+kafkaInit:
+  image:
+    name: operator
+    tag: "${TAG_STRIMZI_OPERATOR}@${DIGEST_STRIMZI_OPERATOR}"
+
+# Operator on the monitoring node
+tolerations:
+  - key: "workload"
+    operator: "Exists"
+    effect: "NoSchedule"
+nodeSelector:
+  workload: monitoring
+
+# The operator is installed in `streaming` and watches only its own namespace. Do NOT also list it under watchNamespaces: the
+# chart adds the release namespace itself, and R1's list made STRIMZI_NAMESPACE "streaming,streaming".
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 384Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+logLevel: INFO

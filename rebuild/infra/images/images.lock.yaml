@@ -1,0 +1,114 @@
+# images.lock.yaml  (template, committed; digests are filled in by the scripts, then committed again)
+#
+# One entry per image any cluster runs. Nothing pulls from Docker Hub, quay.io, ghcr.io or registry.k8s.io at run time:
+# every image is in the project's ECR, referenced as <registry>/<project>/<repo>:<tag>@<digest>.
+#
+#   built:    images this repository builds (arm64, buildx). scripts/build_images.sh pushes them and writes tag + digest.
+#   mirrored: public images. scripts/mirror_images.py resolves the upstream digest, checks that the image has a
+#             linux/arm64 entry, copies it into ECR with the SAME digest and writes the digest back here.
+#   build_bases: base images used only inside Dockerfiles on the build machine. Pinned by digest for provenance.
+#
+# The cluster root (terraform/cluster) refuses to plan while any digest is empty (var.enforce_image_digests).
+# The repos listed here are created by terraform/shared, so a new image needs a shared apply first.
+schema: 1
+platform: linux/arm64
+
+built:
+  orchestrator:
+    repo: orchestrator
+    tag: "r2-002"
+    digest: "sha256:e72cd301be53264df16a3817577d925105c95c768ced8a1b994afd9aad5d0dfe"
+  f6-injector:
+    repo: f6-injector
+    tag: "r2-002"
+    digest: "sha256:0d3e0c441a44ead9d1524ad05fcbb42b74788b97ec700d6d1c5d67b8cbf430ba"
+  flink-jobs:
+    repo: flink-jobs
+    tag: "r2-002"
+    digest: "sha256:f5686ff117fd41ba000747bb4adb3dc523d53a29ca1d64d905f513879154d887"
+  load-generator:
+    repo: load-generator
+    tag: "r2-001"
+    digest: "sha256:625a94f7ba11e2109c7a85cc118f4c8df8227eb1a21559226da5a29957a8e9e9"
+
+mirrored:
+  - key: strimzi-operator
+    source: quay.io/strimzi/operator
+    tag: "0.45.2"
+    repo: mirror/strimzi/operator
+    digest: "sha256:fbf54c39a3b066be84639dc88a3c14d2d90ff30618578a16080fe16375d7c641"
+    used_by: ["helm:strimzi (operator, topic operator, user operator, kafka-init)", "Kafka CR entityOperator"]
+  - key: strimzi-kafka
+    source: quay.io/strimzi/kafka
+    tag: "0.45.2-kafka-3.9.0"
+    repo: mirror/strimzi/kafka
+    digest: "sha256:50d6b41639435813d6e5458d100c619c91d8345f7868f7cd86330d2a0817922b"
+    used_by: ["Kafka CR spec.kafka.image"]
+  - key: flink-operator
+    source: ghcr.io/apache/flink-kubernetes-operator
+    tag: "c703255" # chart 1.10.0 appVersion image. For the 1.16.1 fallback see README.
+    repo: mirror/flink-kubernetes-operator
+    digest: "sha256:e9c2ce635b89cfede3e6a20c002d39803b1cc754f39dc2c6e87f8d4e0cf59d22"
+    used_by: ["helm:flink-kubernetes-operator"]
+  - key: chaos-mesh
+    source: ghcr.io/chaos-mesh/chaos-mesh
+    tag: "v2.8.4"
+    repo: mirror/chaos-mesh/chaos-mesh
+    digest: "sha256:9e48285bb44c63be80f2fe4468c54b0f2d7cdc447ba5f5bc9ded4ab6a973cd37"
+    used_by: ["helm:chaos-mesh controller manager"]
+  - key: chaos-daemon
+    source: ghcr.io/chaos-mesh/chaos-daemon
+    tag: "v2.8.4"
+    repo: mirror/chaos-mesh/chaos-daemon
+    digest: "sha256:0d28dbd95b033279f65605ea88c354d25fe902409197274016dd2efc28ef25cd"
+    used_by: ["helm:chaos-mesh daemon"]
+  - key: prometheus
+    source: quay.io/prometheus/prometheus
+    tag: "v3.2.1"
+    repo: mirror/prometheus/prometheus
+    digest: "sha256:6927e0919a144aa7616fd0137d4816816d42f6b816de3af269ab065250859a62"
+    used_by: ["helm:kube-prometheus-stack"]
+  - key: prometheus-operator
+    source: quay.io/prometheus-operator/prometheus-operator
+    tag: "v0.80.1"
+    repo: mirror/prometheus-operator/prometheus-operator
+    digest: "sha256:4636654efb15f52de0f2f07a97673492bd06b6688b9fcbb10ba147fd596d7949"
+    used_by: ["helm:kube-prometheus-stack"]
+  - key: prometheus-config-reloader
+    source: quay.io/prometheus-operator/prometheus-config-reloader
+    tag: "v0.80.1"
+    repo: mirror/prometheus-operator/prometheus-config-reloader
+    digest: "sha256:125886af6555c1d9726bef0ebc845e922e0f227bba68e0c70fb661295da96bfe"
+    used_by: ["helm:kube-prometheus-stack"]
+  - key: kube-state-metrics
+    source: registry.k8s.io/kube-state-metrics/kube-state-metrics
+    tag: "v2.15.0"
+    repo: mirror/kube-state-metrics/kube-state-metrics
+    digest: "sha256:db384bf43222b066c378e77027a675d4cd9911107adba46c2922b3a55e10d6fb"
+    used_by: ["helm:kube-prometheus-stack"]
+  - key: node-exporter
+    source: quay.io/prometheus/node-exporter
+    tag: "v1.9.0"
+    repo: mirror/prometheus/node-exporter
+    digest: "sha256:c99d7ee4d12a38661788f60d9eca493f08584e2e544bbd3b3fca64749f86b848"
+    used_by: ["helm:kube-prometheus-stack"]
+  - key: aws-cli
+    source: docker.io/amazon/aws-cli
+    tag: "2.22.35" # AWS CLI v2 >= 2.15.0 is required for EKS Pod Identity
+    repo: mirror/aws-cli
+    digest: "sha256:6977c83ae3dc99f28fcf8276b9ea5eec33833cd5be40574b34112e98113ec7a2"
+    used_by: ["orchestrator Job S3 sync sidecar"]
+
+build_bases:
+  python:
+    source: docker.io/library/python
+    tag: "3.12.12-slim-bookworm"
+    digest: "sha256:593bd06efe90efa80dc4eee3948be7c0fde4134606dd40d8dd8dbcade98e669c"
+  flink:
+    source: docker.io/library/flink
+    tag: "1.19.3-java17" # one pinned version; build.gradle compiles against 1.19.1 (same minor, API compatible)
+    digest: "sha256:5d55cb672e95515a671058fb6806455c1f748bb566da694a57564cdbb05b2733"
+  gradle:
+    source: docker.io/library/gradle
+    tag: "8.10-jdk17"
+    digest: "sha256:c2900027f3f0681c2cbfb09d527813851ad67aeafbb409997297efa2df20e748"

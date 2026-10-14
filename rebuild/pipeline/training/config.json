@@ -1,0 +1,8 @@
+{
+  "seed_base": 42,
+  "seed_campaign_multiplier": 1000,
+  "search_campaign_index": 1,
+  "max_epochs": 100,
+  "trials": {"deep": 100, "classical": 100, "RF": 50},
+  "fp_budgets": [0.01, 0.05]
+}

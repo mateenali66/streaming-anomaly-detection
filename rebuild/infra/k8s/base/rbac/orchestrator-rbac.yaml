@@ -1,0 +1,159 @@
+# RBAC for the in-cluster orchestrator (REVIEW3 section F). R1 used one ClusterRole with cluster-wide pod and service delete,
+# chaos-mesh.org "*" and deployment patch. Now: a namespaced Role in `streaming`, read-only Roles in `observability` and
+# `chaos-mesh` (provenance listing), and one tiny ClusterRole for nodes (the protocol's EC2 instance-ID check). Nothing else
+# is cluster-wide.
+#
+# Verbs follow what the fault and gate code needs:
+#   pods                     get list watch delete        F1 pod-kill by name, F5 TaskManager kills, UID checks
+#   pods/exec                get create                   TCP probes from inside brokers and TaskManagers, Flink REST via the JobManager.
+#                                                         kubectl 1.35 opens exec over WebSocket first, an HTTP GET that RBAC
+#                                                         authorizes as `get` (KEP-4006); with create only, every exec is refused
+#                                                         once and falls back to SPDY (REVIEW4_LIVE_CONTRACT L9)
+#   pods/log                 get                          F6 injector's final "INJECTED sent=.. delivered=.. failed=.." line
+#   configmaps               get list create delete       only if a fault ships a script as a ConfigMap (kept for compatibility)
+#   configmaps (one name)    update patch                 campaign-watchdog-state: the alert-only watchdog's send times (C6)
+#   events                   get list watch               Kubernetes events for each chaos resource (verification record)
+#   persistentvolumeclaims   get list                     disk checks
+#   batch/jobs               get list watch create delete F6 injector Job
+#   apps/deployments         get list                     load generator and verification consumer readiness
+#   flink.apache.org         flinkdeployments get list patch
+#   chaos-mesh.org           podchaos networkchaos stresschaos: create get list watch delete   (IOChaos is not needed: F3 is dropped)
+#   kafka.strimzi.io         kafkas kafkatopics kafkanodepools: get list
+# There is no create/patch on pods, no services, no secrets, no cluster-wide verbs.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: campaign-orchestrator
+  namespace: streaming
+automountServiceAccountToken: true
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: campaign-orchestrator
+  namespace: streaming
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["get", "create"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "create", "delete"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    resourceNames: ["campaign-watchdog-state"]
+    verbs: ["update", "patch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list"]
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["get", "list", "watch", "create", "delete"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list"]
+  - apiGroups: ["flink.apache.org"]
+    resources: ["flinkdeployments"]
+    verbs: ["get", "list", "patch"]
+  - apiGroups: ["chaos-mesh.org"]
+    resources: ["podchaos", "networkchaos", "stresschaos"]
+    verbs: ["create", "get", "list", "watch", "delete"]
+  - apiGroups: ["kafka.strimzi.io"]
+    resources: ["kafkas", "kafkatopics", "kafkanodepools"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: campaign-orchestrator
+  namespace: streaming
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: campaign-orchestrator
+subjects:
+  - kind: ServiceAccount
+    name: campaign-orchestrator
+    namespace: streaming
+---
+# Read-only pod listing in the other two namespaces, for the provenance block (image digests, restarts, nodes).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: campaign-orchestrator-read
+  namespace: observability
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: campaign-orchestrator-read
+  namespace: observability
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: campaign-orchestrator-read
+subjects:
+  - kind: ServiceAccount
+    name: campaign-orchestrator
+    namespace: streaming
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: campaign-orchestrator-read
+  namespace: chaos-mesh
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: campaign-orchestrator-read
+  namespace: chaos-mesh
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: campaign-orchestrator-read
+subjects:
+  - kind: ServiceAccount
+    name: campaign-orchestrator
+    namespace: streaming
+---
+# Nodes are cluster-scoped. get and list only: the orchestrator records the EC2 instance ID of every node
+# (spec.providerID) at campaign start and halts if the set changes (protocol 1.6).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: campaign-orchestrator-nodes-read
+rules:
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: campaign-orchestrator-nodes-read
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: campaign-orchestrator-nodes-read
+subjects:
+  - kind: ServiceAccount
+    name: campaign-orchestrator
+    namespace: streaming

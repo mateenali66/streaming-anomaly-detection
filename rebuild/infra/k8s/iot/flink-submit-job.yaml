@@ -1,0 +1,46 @@
+# One-shot submission of this workload's Flink jobs to the session cluster, using the flink CLI inside the flink-jobs image
+# against the REST service. It replaces R1's `flink run` through kubectl exec and the watchdog CronJob. It needs no RBAC.
+# Re-running it is safe: jobs that already run are skipped (images/flink-jobs/submit-jobs.sh).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: flink-submit
+  namespace: streaming
+  labels:
+    app: flink-submit
+    infra.phase: submit
+spec:
+  backoffLimit: 2
+  activeDeadlineSeconds: 900
+  template:
+    metadata:
+      labels:
+        app: flink-submit
+    spec:
+      restartPolicy: Never
+      tolerations:
+        - key: "workload"
+          value: "monitoring"
+          effect: "NoSchedule"
+      nodeSelector:
+        workload: monitoring
+      automountServiceAccountToken: false
+      containers:
+        - name: submit
+          image: ${REF_FLINK_JOBS}
+          command: ["/opt/flink/bin/submit-jobs.sh"]
+          env:
+            - name: WORKLOAD
+              valueFrom:
+                configMapKeyRef:
+                  name: workload-config
+                  key: WORKLOAD
+            - name: FLINK_REST
+              value: streaming-flink-rest.streaming.svc.cluster.local:8081
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi

@@ -1,0 +1,127 @@
+# JMX Prometheus Exporter rules for the Kafka brokers (Strimzi metricsConfig, served on :9404).
+#
+# Docs relied on (context7 /prometheus/jmx_exporter, checked 13 Oct 2026): rules are evaluated in order and the FIRST matching
+# rule wins; "attributes that do not match any configured rule are not collected"; the pattern is matched against
+#   domain<beanProp=value, ...><keys>attrName: value
+# and is NOT anchored. So an attribute pattern in a NEW rule ends in "(?:: .*)?$": "Mean" must not also match "MeanRate", and the
+# pattern works whether or not the ": value" tail is part of the matched string.
+# R1 collected only the `Count` attribute, so request-time Mean and percentiles, log-flush time and the KRaft quorum
+# attributes matched no rule and were never exported (REVIEW1 B7/B9, audit section 3).
+#
+# Metric names below are an INTERFACE (NAMES.md section 6). The names are lower case because of lowercaseOutputName.
+#   kafka_network_requestmetrics_<totaltimems|requestqueuetimems|localtimems|remotetimems|responsequeuetimems|responsesendtimems>_<mean|max|50thpercentile|95thpercentile|99thpercentile|999thpercentile>{request=Produce|FetchConsumer|FetchFollower}
+#   kafka_log_logflushstats_logflushrateandtimems_<mean|max|50thpercentile|95thpercentile|99thpercentile|999thpercentile>
+#   kafka_controller_kafkacontroller_<activecontrollercount|fencedbrokercount|activebrokercount|offlinepartitionscount|preferredreplicaimbalancecount|globalpartitioncount|...>
+#   kafka_server_raftmetrics_<current_leader|current_epoch|high_watermark|...>
+#   kafka_server_replicamanager_<underreplicatedpartitions|underminisrpartitioncount|isrshrinks_total|isrexpands_total|leadercount|partitioncount|...>
+# R1 names are kept as they were.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-metrics-config
+  namespace: streaming
+  labels:
+    app: kafka-metrics
+data:
+  kafka-metrics-config.yml: |
+    lowercaseOutputName: true
+    lowercaseOutputLabelNames: true
+    rules:
+      # ---- NEW: request time per stage, mean / max / percentiles (Yammer histograms) ----
+      - pattern: 'kafka.network<type=RequestMetrics, name=(TotalTimeMs|RequestQueueTimeMs|LocalTimeMs|RemoteTimeMs|ResponseQueueTimeMs|ResponseSendTimeMs), request=(Produce|FetchConsumer|FetchFollower)><>(Mean|Max|50thPercentile|95thPercentile|99thPercentile|999thPercentile)(?:: .*)?$'
+        name: kafka_network_requestmetrics_$1_$3
+        labels:
+          request: $2
+        type: GAUGE
+      # ---- NEW: log flush time (Yammer timer). Count stays below as the _total counter. ----
+      - pattern: 'kafka.log<type=LogFlushStats, name=LogFlushRateAndTimeMs><>(Mean|Max|50thPercentile|95thPercentile|99thPercentile|999thPercentile)(?:: .*)?$'
+        name: kafka_log_logflushstats_logflushrateandtimems_$1
+        type: GAUGE
+      # ---- NEW: thread saturation and purgatory ----
+      - pattern: 'kafka.server<type=KafkaRequestHandlerPool, name=RequestHandlerAvgIdlePercent><>OneMinuteRate(?:: .*)?$'
+        name: kafka_server_requesthandleravgidlepercent_oneminuterate
+        type: GAUGE
+      - pattern: 'kafka.network<type=SocketServer, name=NetworkProcessorAvgIdlePercent><>Value(?:: .*)?$'
+        name: kafka_network_networkprocessoravgidlepercent
+        type: GAUGE
+      - pattern: 'kafka.server<type=DelayedOperationPurgatory, name=PurgatorySize, delayedOperation=(.+)><>Value(?:: .*)?$'
+        name: kafka_server_delayedoperationpurgatory_purgatorysize
+        labels:
+          delayedoperation: $1
+        type: GAUGE
+      # ---- NEW: KRaft controller state. ActiveControllerCount is 1 on the active controller and 0 elsewhere,
+      # FencedBrokerCount is the number of brokers the controller has fenced, PreferredReplicaImbalanceCount feeds the
+      # recovery gate. The generic controller rule further down would also match them, this one only documents the names.
+      - pattern: 'kafka.controller<type=KafkaController, name=(ActiveControllerCount|FencedBrokerCount|ActiveBrokerCount|OfflinePartitionsCount|PreferredReplicaImbalanceCount|GlobalPartitionCount|GlobalTopicCount|MetadataErrorCount|TimedOutBrokerHeartbeatCount)><>Value(?:: .*)?$'
+        name: kafka_controller_kafkacontroller_$1
+        type: GAUGE
+      # ---- NEW: KRaft quorum (kafka.server:type=raft-metrics). Non-numeric attributes such as current-state are skipped by the
+      # exporter. Attribute names are written from the Kafka 3.9 metrics reference and must be confirmed on a live broker (pilot).
+      - pattern: 'kafka.server<type=raft-metrics><>([a-z-]+)(?:: .*)?$'
+        name: kafka_server_raftmetrics_$1
+        type: GAUGE
+      # ---- NEW: broker state, leader count, replica fetcher lag ----
+      - pattern: 'kafka.server<type=KafkaServer, name=BrokerState><>Value(?:: .*)?$'
+        name: kafka_server_kafkaserver_brokerstate
+        type: GAUGE
+      - pattern: 'kafka.server<type=ReplicaManager, name=(LeaderCount|OfflineReplicaCount|ReassigningPartitions)><>Value(?:: .*)?$'
+        name: kafka_server_replicamanager_$1
+        type: GAUGE
+      - pattern: 'kafka.server<type=ReplicaFetcherManager, name=MaxLag, clientId=(.+)><>Value(?:: .*)?$'
+        name: kafka_server_replicafetchermanager_maxlag
+        labels:
+          client_id: $1
+        type: GAUGE
+      - pattern: 'kafka.controller<type=ControllerStats, name=LeaderElectionRateAndTimeMs><>(Count|Mean|99thPercentile)(?:: .*)?$'
+        name: kafka_controller_controllerstats_leaderelectionrateandtimems_$1
+        type: GAUGE
+
+      # ---- R1 rules, unchanged names AND unchanged patterns (they produced the R1 data) ----
+      - pattern: 'kafka.server<type=BrokerTopicMetrics, name=(.+), topic=(.+)><>Count'
+        name: kafka_server_brokertopicmetrics_$1_total
+        labels:
+          topic: $2
+        type: COUNTER
+      - pattern: 'kafka.server<type=BrokerTopicMetrics, name=(.+)><>Count'
+        name: kafka_server_brokertopicmetrics_$1_total
+        type: COUNTER
+      - pattern: 'kafka.network<type=RequestMetrics, name=(.+), request=(.+), error=(.+)><>Count'
+        name: kafka_network_requestmetrics_$1_total
+        labels:
+          request: $2
+          error: $3
+        type: COUNTER
+      - pattern: 'kafka.network<type=RequestMetrics, name=(.+), request=(.+)><>Count'
+        name: kafka_network_requestmetrics_$1_total
+        labels:
+          request: $2
+        type: COUNTER
+      - pattern: 'kafka.server<type=ReplicaManager, name=UnderReplicatedPartitions><>Value'
+        name: kafka_server_replicamanager_underreplicatedpartitions
+        type: GAUGE
+      - pattern: 'kafka.server<type=ReplicaManager, name=UnderMinIsrPartitionCount><>Value'
+        name: kafka_server_replicamanager_underminisrpartitioncount
+        type: GAUGE
+      - pattern: 'kafka.server<type=ReplicaManager, name=IsrShrinksPerSec><>Count'
+        name: kafka_server_replicamanager_isrshrinks_total
+        type: COUNTER
+      - pattern: 'kafka.server<type=ReplicaManager, name=IsrExpandsPerSec><>Count'
+        name: kafka_server_replicamanager_isrexpands_total
+        type: COUNTER
+      - pattern: 'kafka.server<type=ReplicaManager, name=PartitionCount><>Value'
+        name: kafka_server_replicamanager_partitioncount
+        type: GAUGE
+      - pattern: 'kafka.controller<type=KafkaController, name=(.+)><>Value'
+        name: kafka_controller_kafkacontroller_$1
+        type: GAUGE
+      - pattern: 'kafka.log<type=LogFlushStats, name=LogFlushRateAndTimeMs><>Count'
+        name: kafka_log_logflushstats_logflushrateandtimems_total
+        type: COUNTER
+      - pattern: 'kafka.server<type=FetcherLagMetrics, name=ConsumerLag, clientId=(.+), topic=(.+), partition=(.+)><>Value'
+        name: kafka_server_fetcherlagmetrics_consumerlag
+        labels:
+          client_id: $1
+          topic: $2
+          partition: $3
+        type: GAUGE
+      # JVM metrics come from the exporter's own default collectors. Do NOT add java.lang rules (duplicate metric errors).

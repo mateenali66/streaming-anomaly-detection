@@ -1,0 +1,103 @@
+# Load generator (streaming-app/load-generator, wrapped by images/load-generator/loadgen_entry.py).
+# One replica. Per-workload settings come from the ConfigMap `loadgen-config` (k8s/<workload>/loadgen-config.yaml).
+#
+# Prometheus (scraped on 9102 by the `load-generator` job in prometheus-values.yaml):
+#   loadgen_target_rate_per_second   the rate the generator is aiming at now (sinusoid, plus the IoT burst)
+#   loadgen_actual_rate_per_second   events handed to the producer per second over the last 5 s
+#   loadgen_produced_total           counter of produced events (rate() of it is the real produce rate)
+#   loadgen_delivery_failures_total, loadgen_produce_errors_total
+#   loadgen_start_time_seconds       unix time this process started
+#   loadgen_epoch_seconds            unix time the load cycle is measured from (the cycle phase is (now - epoch) mod 1800)
+#   loadgen_cycle_phase_seconds      (now - epoch) mod the sinusoid period, so the phase at fault onset can be recorded
+#   loadgen_burst_active             1 inside an IoT burst, else 0
+#   loadgen_seed, loadgen_info{workload,profile,seed}
+# The seed and the epoch survive a pod restart: the seed is an env value and the epoch is read from the ConfigMap
+# `loadgen-epoch`, written ONCE by scripts/deploy_workload.sh. A restarted generator therefore continues the same cycle.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: load-generator
+  namespace: streaming
+  labels:
+    app: load-generator
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: load-generator
+  template:
+    metadata:
+      labels:
+        app: load-generator
+    spec:
+      tolerations:
+        - key: "workload"
+          value: "monitoring"
+          effect: "NoSchedule"
+      nodeSelector:
+        workload: monitoring
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+      containers:
+        - name: generator
+          image: ${REF_LOAD_GENERATOR}
+          envFrom:
+            - configMapRef:
+                name: loadgen-config
+          env:
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: streaming-kafka-kafka-bootstrap.streaming.svc.cluster.local:9092
+            - name: KAFKA_TOPIC
+              value: raw-events
+            - name: LOADGEN_SEED
+              value: "${LOADGEN_SEED}"
+            - name: LOADGEN_EPOCH_UNIX
+              valueFrom:
+                configMapKeyRef:
+                  name: loadgen-epoch
+                  key: LOADGEN_EPOCH_UNIX
+            - name: LOADGEN_METRICS_PORT
+              value: "9102"
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
+          ports:
+            - name: metrics
+              containerPort: 9102
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: load-generator
+  namespace: streaming
+  labels:
+    app: load-generator
+spec:
+  selector:
+    app: load-generator
+  ports:
+    - name: metrics
+      port: 9102
+      targetPort: metrics

@@ -1,0 +1,75 @@
+# run/feature_allowlist.yaml (protocol 11.8): metric-name patterns per source.
+# Each pattern is a Prometheus regex for __name__ (fully anchored by Prometheus).
+#
+# Feature sources (features.parquet): broker, consumer, flink, jvm. They are the R1 export list
+# (infrastructure/scripts/export_metrics.py) with two changes: the controller-identity metric
+# kafka_controller_kafkacontroller_activecontrollercount moves to the verification file only (2.3.3), and no
+# pattern may match a probe metric (rebuild_*), which the exporter also refuses at start.
+#
+# Verification sources (verification.parquet): cadvisor, kube_state, kafka_controller, kafka_broker_copy, scrape.
+# kafka_broker_copy is the under-replicated-partition series again, for the F1 and F2 presence check (2.1).
+# scrape is Prometheus' own per-target health of the kafka-brokers and flink-metrics jobs, for the telemetry rule
+# (decision 21, rebuild/CONTRACT_CHANGES.md C22).
+broker:
+  - kafka_server_brokertopicmetrics_messagesinpersec_total
+  - kafka_server_brokertopicmetrics_bytesinpersec_total
+  - kafka_server_brokertopicmetrics_bytesoutpersec_total
+  - kafka_server_brokertopicmetrics_totalproducerequestspersec_total
+  - kafka_server_brokertopicmetrics_totalfetchrequestspersec_total
+  - kafka_server_replicamanager_underreplicatedpartitions
+  - kafka_server_replicamanager_underminisrpartitioncount
+  - kafka_server_replicamanager_isrshrinks_total
+  - kafka_server_replicamanager_isrexpands_total
+  - kafka_server_replicamanager_partitioncount
+  - kafka_controller_kafkacontroller_offlinepartitionscount
+  - kafka_controller_kafkacontroller_preferredreplicaimbalancecount
+  - kafka_log_logflushstats_logflushrateandtimems_total
+  - kafka_network_requestmetrics_requestspersec_total
+consumer:
+  - flink_taskmanager_job_task_operator_KafkaSourceReader_KafkaConsumer_records_lag.*
+  - flink_taskmanager_job_task_operator_KafkaSourceReader_KafkaConsumer_records_consumed_rate.*
+  - flink_taskmanager_job_task_operator_KafkaSourceReader_KafkaConsumer_assigned_partitions.*
+  - flink_taskmanager_job_task_operator_KafkaSourceReader.*commit.*
+  - flink_taskmanager_job_task_operator_KafkaSourceReader.*rebalance.*
+flink:
+  - flink_taskmanager_job_task_operator_numRecordsInPerSecond.*
+  - flink_taskmanager_job_task_operator_numRecordsOutPerSecond.*
+  - flink_taskmanager_job_task_numRecordsIn.*
+  - flink_taskmanager_job_task_numRecordsOut.*
+  - flink_taskmanager_job_task_backPressuredTimeMsPerSecond.*
+  - flink_taskmanager_job_task_idleTimeMsPerSecond.*
+  - flink_taskmanager_job_task_busyTimeMsPerSecond.*
+  - flink_jobmanager_job_lastCheckpointDuration.*
+  - flink_jobmanager_job_lastCheckpointSize.*
+  - flink_jobmanager_job_numberOfCompletedCheckpoints.*
+  - flink_jobmanager_job_numberOfFailedCheckpoints.*
+  - flink_taskmanager_job_task_operator_currentInputWatermark.*
+  - flink_jobmanager_job_uptime.*
+  - flink_taskmanager_Status_Shuffle_Netty.*
+jvm:
+  - jvm_memory.*
+  - jvm_gc.*
+  - jvm_threads.*
+  - jvm_buffer.*
+  - flink_taskmanager_Status_JVM_Memory.*
+  - flink_taskmanager_Status_JVM_GarbageCollector.*
+  - flink_taskmanager_Status_JVM_Threads.*
+  - flink_taskmanager_Status_JVM_CPU.*
+cadvisor:
+  - container_cpu_usage_seconds_total
+  - container_memory_working_set_bytes
+  - container_oom_events_total
+kube_state:
+  - kube_pod_info
+  - kube_pod_status_ready
+  - kube_pod_container_resource_limits
+  - kube_pod_container_status_restarts_total
+  - kube_pod_container_status_last_terminated_reason
+kafka_controller:
+  - kafka_controller_kafkacontroller_fencedbrokercount
+  - kafka_controller_kafkacontroller_activecontrollercount
+kafka_broker_copy:
+  - kafka_server_replicamanager_underreplicatedpartitions
+scrape:
+  - up
+  - scrape_samples_scraped

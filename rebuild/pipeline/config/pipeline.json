@@ -1,0 +1,131 @@
+{
+  "config_version": "1",
+  "search_campaign_index": 1,
+  "window_sizes": {
+    "every_campaign": [30],
+    "search_campaign": {"ecommerce": [15, 30, 60, 120], "iot": [15, 30, 60, 120, 300]}
+  },
+  "checksums": {"ignore_local_files": [".DS_Store"]},
+  "export_duplicates": "error",
+  "require_all_cells_valid": true,
+  "f6_apply_max_s": 5,
+  "labels": {
+    "drop_before_naming": ["job_id", "task_attempt_id", "task_attempt_num", "node"],
+    "tm_identity": ["subtask_index", "tm_id", "host"],
+    "naming_note": "Fixed per-metric list of the labels that enter a feature name (Review 4 MIN-11). Rules are matched on the Prometheus metric name in order, and the first match wins. A label in the list that a series carries adds .<key>-<value> in sorted key order. Any other label that is not dropped stays part of the series identity, so two series that differ only in it fail the build. A feature metric that no rule matches fails the build.",
+    "naming": [
+      {"metric_regex": "^kafka_server_brokertopicmetrics_", "labels": ["topic"]},
+      {"metric_regex": "^kafka_network_requestmetrics_", "labels": ["error", "request"]},
+      {"metric_regex": "^kafka_server_delayedoperationpurgatory_", "labels": ["delayedoperation"]},
+      {"metric_regex": "^kafka_server_(replicafetchermanager|fetcherlagmetrics)_", "labels": ["client_id", "partition", "topic"]},
+      {"metric_regex": "^kafka_(server|controller|log|network)_", "labels": []},
+      {"metric_regex": "^kafka_topic_", "labels": ["topic"]},
+      {"metric_regex": "^jvm_memory_pool_", "labels": ["pool"]},
+      {"metric_regex": "^jvm_memory_", "labels": ["area"]},
+      {"metric_regex": "^jvm_buffer_pool_", "labels": ["pool"]},
+      {"metric_regex": "^jvm_gc_", "labels": ["gc"]},
+      {"metric_regex": "^jvm_threads_state", "labels": ["state"]},
+      {"metric_regex": "^jvm_threads_", "labels": []},
+      {"metric_regex": "^flink_taskmanager_job_task_operator_KafkaSourceReader_topic_partition_", "labels": ["job_name", "operator_name", "partition", "task_name", "topic"]},
+      {"metric_regex": "^flink_taskmanager_job_task_operator_", "labels": ["job_name", "operator_name", "task_name"]},
+      {"metric_regex": "^flink_taskmanager_job_task_", "labels": ["job_name", "task_name"]},
+      {"metric_regex": "^flink_jobmanager_job_", "labels": ["job_name"]},
+      {"metric_regex": "^flink_taskmanager_Status_", "labels": []},
+      {"metric_regex": "^flink_jobmanager_", "labels": []}
+    ]
+  },
+  "counters": {
+    "extra_patterns": [
+      "_total$",
+      "_bucket$",
+      "(^|_)numRecords(In|Out)$",
+      "(^|_)numBytes(In|Out)(Local|Remote)?$",
+      "(^|_)numLateRecordsDropped$",
+      "(^|_)numberOf(Completed|Failed)Checkpoints$",
+      "(^|_)totalNumberOfCheckpoints$",
+      "(^|_)(numRestarts|fullRestarts)$",
+      "_GarbageCollector_.+_(Count|Time)$",
+      "_JVM_CPU_Time$",
+      "(^|_)commits(Succeeded|Failed)$",
+      "_committedOffset$",
+      "_currentOffset$"
+    ],
+    "exclude_feature_patterns": ["_currentInputWatermark$", "_job_uptime$",
+                                 "^flink_(taskmanager|jobmanager)_Status_JVM_Memory_(NonHeap|Metaspace)_(Used|Committed)$"],
+    "exclude_series_note": "From the pilot of 14 October 2026 (decision 38). The JVM pools that only grow with process age, and two families of Kafka meters that open on first use and close on leadership loss or restart, so their presence follows fault history (REVIEW4_LIVE_CONTRACT L3): the dead-letter topic's, and request types other than the data path. Each rule matches the metric name and one label value.",
+    "exclude_series": [
+      {"metric_regex": "^jvm_memory_(used|committed)_bytes$", "label": "area", "value_regex": "^nonheap$"},
+      {"metric_regex": "^jvm_memory_pool_(used|committed)_bytes$", "label": "pool", "value_regex": "^(Metaspace|Compressed Class Space|CodeHeap .*|G1 Old Gen)$"},
+      {"metric_regex": "^kafka_server_brokertopicmetrics_", "label": "topic", "value_regex": "^dead-letter$"},
+      {"metric_regex": "^kafka_network_requestmetrics_requestspersec", "label": "request", "value_regex": "^(?!(Produce|Fetch|FetchConsumer|FetchFollower|Metadata)(,|$))"}
+    ]
+  },
+  "monotone_guard": {
+    "policy": "error",
+    "min_nondecreasing_frac": 0.99,
+    "min_spearman": 0.99,
+    "min_points": 30,
+    "allow_metric_patterns": []
+  },
+  "telemetry": {
+    "attempt_min_coverage_frac": 0.95,
+    "window_min_steps_num": 2,
+    "window_min_steps_den": 3,
+    "feature_recompute": "error",
+    "baseline_outage": "error"
+  },
+  "derived": {
+    "checkpoint_interval_ms": 60000.0,
+    "inputs": {
+      "lag": {"source": "consumer", "roles": ["taskmanager"], "metric_regex": "KafkaConsumer_records_lag_max$", "reduce": "max"},
+      "records_out": {"source": "flink", "roles": ["taskmanager"], "metric_regex": "^flink_taskmanager_job_task_numRecordsOutPerSecond$", "reduce": "sum"},
+      "records_in": {"source": "flink", "roles": ["taskmanager"], "metric_regex": "^flink_taskmanager_job_task_numRecordsInPerSecond$", "reduce": "sum"},
+      "checkpoint_duration_ms": {"source": "flink", "roles": ["jobmanager"], "metric_regex": "^flink_jobmanager_job_lastCheckpointDuration$", "reduce": "max"},
+      "isr_shrinks_per_s": {"source": "broker", "roles": ["broker"], "metric_regex": "^kafka_server_replicamanager_isrshrinks_total$", "reduce": "sum"},
+      "isr_expands_per_s": {"source": "broker", "roles": ["broker"], "metric_regex": "^kafka_server_replicamanager_isrexpands_total$", "reduce": "sum"},
+      "partition_count": {"source": "broker", "roles": ["broker"], "metric_regex": "^kafka_server_replicamanager_partitioncount$", "reduce": "sum"},
+      "rebalances_per_s": {"source": "consumer", "roles": ["taskmanager"], "metric_regex": "KafkaConsumer_rebalance_total$", "reduce": "sum"},
+      "backpressured_ms": {"source": "flink", "roles": ["taskmanager"], "metric_regex": "^flink_taskmanager_job_task_backPressuredTimeMsPerSecond$", "reduce": "sum"},
+      "busy_ms": {"source": "flink", "roles": ["taskmanager"], "metric_regex": "^flink_taskmanager_job_task_busyTimeMsPerSecond$", "reduce": "sum"},
+      "idle_ms": {"source": "flink", "roles": ["taskmanager"], "metric_regex": "^flink_taskmanager_job_task_idleTimeMsPerSecond$", "reduce": "sum"},
+      "watermark_ms": {"source": "flink", "roles": ["taskmanager"], "metric_regex": "^flink_taskmanager_job_task_operator_currentInputWatermark$", "reduce": "min", "value": "raw"}
+    }
+  },
+  "missingness": {
+    "note": "Columns left out of the TaskManager and broker missingness shares (decision 25, extended to brokers). Kafka opens a topic's broker meters at the first append to a partition the broker leads and closes them when it loses leadership (REVIEW4_LIVE_CONTRACT L3). The dead-letter topic is written only during F6, so after an F1 or F2 its meters on the affected broker stay closed until the next F6, and counting them would carry fault history into later NORMAL windows. Since the pilot these series are also kept out of the features (counters.exclude_series, decision 38).",
+    "exclude_column_regex": ["^kafka_server_brokertopicmetrics_[a-z]+_per_s\\.topic-dead_letter$"]
+  },
+  "folds": {"n_folds": 10},
+  "fold_fit": {
+    "note": "Per-fold selection, imputation and scaling, fitted on train NORMAL windows only (protocol 4.1.4, Review 4 CAM-4, decision 25). Protected columns are never removed by the variance or correlation filter. Every column that is constant on train NORMAL keeps unit scale.",
+    "variance_threshold": 0.01,
+    "correlation_threshold": 0.95,
+    "protected": {
+      "exempt_from": ["variance", "correlation"],
+      "patterns": [
+        {"regex": "^f__flink__taskmanagers_reporting__", "why": "TaskManager count (3.4.4, 4.1.3)"},
+        {"regex": "^f__(consumer|flink|jvm)__tm_aggregates_missing_frac__", "why": "TaskManager aggregate missingness (decision 25)"},
+        {"regex": "^f__broker__brokers_reporting__", "why": "broker count, decision 25 extended to brokers, author to confirm"},
+        {"regex": "^f__(broker|jvm)__broker_series_missing_frac__", "why": "per-broker missingness, decision 25 extended to brokers, author to confirm"},
+        {"regex": "^f__derived__", "why": "the eight derived features stay (4.1.5)"},
+        {"regex": "^f__broker__kafka_server_replicamanager_underreplicatedpartitions__", "why": "under-replicated partitions, 0 when healthy"},
+        {"regex": "^f__broker__kafka_server_replicamanager_underminisrpartitioncount__", "why": "partitions under min ISR, 0 when healthy"},
+        {"regex": "^f__broker__kafka_controller_kafkacontroller_offlinepartitionscount__", "why": "offline partitions, 0 when healthy"},
+        {"regex": "^f__broker__kafka_controller_kafkacontroller_preferredreplicaimbalancecount__", "why": "leaders off their preferred broker, 0 in steady state, rises after a broker restart"},
+        {"regex": "^f__broker__kafka_server_replicamanager_isr(shrinks|expands)_per_s__", "why": "ISR shrinks and expands, 0 when healthy"},
+        {"regex": "^f__flink__flink_jobmanager_job_numberOfFailedCheckpoints_per_s", "why": "failed checkpoints, 0 when healthy"},
+        {"regex": "^f__flink__flink_taskmanager_job_task_operator_numRecords(In|Out)PerSecond\\..*operator_name-dead_letter_sink", "why": "records into the dead-letter sink, 0 when healthy"},
+        {"regex": "^f__consumer__flink_taskmanager_job_task_operator_KafkaSourceReader_commitsFailed_per_s", "why": "failed offset commits, 0 when healthy"},
+        {"regex": "^f__consumer__flink_taskmanager_job_task_operator_KafkaSourceReader_KafkaConsumer_rebalance", "why": "consumer rebalances, 0 when healthy"}
+      ]
+    }
+  },
+  "evaluation": {
+    "note": "Fixed before the pilot (Review 4 MIN-9, decision 27). within_run tags the last pre-fault windows of every valid attempt in windows_<w>s.parquet and in every score file, so every model uses the same within-run negatives.",
+    "anchor_window_s": 30,
+    "seq_length": {"min": 5, "max": 11},
+    "within_run": {"n_late": 5, "n_early": 5},
+    "c5_time_reference": "position"
+  },
+  "feature_chunk_columns": 128
+}

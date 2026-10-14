@@ -1,0 +1,21 @@
+# Settings read by streaming-app/load-generator/config.py: IOT_MEDIUM = 10000 events/s, +/-20% over a 1800 s sinusoid,
+# and a 2x burst for 30 s every 300 s (the R1 IoT settings).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loadgen-config
+  namespace: streaming
+  labels:
+    infra.phase: load
+data:
+  WORKLOAD: "IOT"
+  THROUGHPUT_PROFILE: "IOT_MEDIUM"
+  SINUSOIDAL_AMPLITUDE: "0.2"
+  SINUSOIDAL_PERIOD_SEC: "1800"
+  NUM_DEVICES: "100000"
+  NUM_LOCATIONS: "500"
+  BURST_PERIOD_SEC: "300"
+  BURST_DURATION_SEC: "30"
+  BURST_MULTIPLIER: "2.0"
+  PRODUCER_ACKS: "all"
+  PRODUCER_COMPRESSION: "lz4"

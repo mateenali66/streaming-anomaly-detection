@@ -1,0 +1,10 @@
+# Copy to backend.hcl (gitignored). ONE state per campaign: the key carries the campaign id. Leave the key line as it is and
+# pass the real key at init, together with a per-campaign TF_DATA_DIR (REVIEW4 C4):
+#   export TF_DATA_DIR=.terraform/<campaign>
+#   terraform init -reconfigure -backend-config=backend.hcl -backend-config="key=campaigns/<campaign>/terraform.tfstate"
+# Credentials come from the environment (export AWS_PROFILE=...), not from this file.
+bucket       = "REPLACE-state-bucket"
+key          = "campaigns/REPLACE-campaign-id/terraform.tfstate"
+region       = "us-east-2"
+encrypt      = true
+use_lockfile = true # S3 native locking, Terraform >= 1.10

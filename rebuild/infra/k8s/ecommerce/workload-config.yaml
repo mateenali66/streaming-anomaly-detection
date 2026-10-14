@@ -1,0 +1,16 @@
+# Facts about THIS workload that the orchestrator, the verification consumer and the exporter read. WORKLOAD has no default
+# anywhere: a cluster without this ConfigMap cannot start them. Values are uppercase (ECOMMERCE | IOT) as the code expects;
+# the Terraform variable is lower case (ecommerce | iot).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: workload-config
+  namespace: streaming
+  labels:
+    infra.phase: rbac # created together with the service accounts, before anything reads it
+data:
+  WORKLOAD: "ECOMMERCE"
+  # Names the jobs give themselves in env.execute(). The recovery gate requires every one RUNNING (REVIEW1 A2).
+  FLINK_EXPECTED_JOBS: "Event Enrichment Job,Windowed Aggregation Job,Fraud Detection Job"
+  # Base rate of the profile, events per second, before the sinusoid. LOW = 1000.
+  LOADGEN_BASE_RATE: "1000"

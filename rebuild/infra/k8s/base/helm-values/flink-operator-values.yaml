@@ -1,0 +1,32 @@
+# Flink Kubernetes Operator 1.10.0 (R1 continuity). Fallback: 1.16.1, same file. See README "Fallbacks".
+# Docs relied on (context7 /apache/flink-kubernetes-operator, checked 13 Oct 2026): a session cluster is a
+# FlinkDeployment with no spec.job; helm values watchNamespaces and webhook.create.
+#
+# The chart creates the `flink` service account and its namespaced Role in `streaming`
+# (jobServiceAccount, rbac.jobRole). R1 bound that account to the cluster-wide `edit` ClusterRole. Not any more.
+image:
+  repository: ${REPO_FLINK_OPERATOR}
+  tag: "${TAG_FLINK_OPERATOR}@${DIGEST_FLINK_OPERATOR}"
+  pullPolicy: IfNotPresent
+
+operatorPod:
+  tolerations:
+    - key: "workload"
+      operator: "Exists"
+      effect: "NoSchedule"
+  nodeSelector:
+    workload: monitoring
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 768Mi
+
+watchNamespaces:
+  - streaming
+
+# Admission webhook off: it needs cert-manager and a research workload does not need it.
+webhook:
+  create: false

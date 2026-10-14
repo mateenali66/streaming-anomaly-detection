@@ -1,0 +1,80 @@
+# Campaign configuration for the orchestrator. This is the ONE config file (task brief, REBUILD_PROTOCOL.md).
+# Every value is the protocol default. The comment on each line names the protocol rule and the alternatives.
+#
+# The workload is NOT set here. It is the required environment variable WORKLOAD (ecommerce or iot) with no
+# default (protocol 1.7: one codebase serves both workloads through a required setting with no default).
+#
+# Values that enter the plan (pre_fault_s, settle_max_s, the F1, F5 and F8 values and the URP switch) change the
+# plan bytes and so PLAN_SHA256. Values that do not enter the plan (trailing baseline, halt rules) go into
+# run/thresholds.json, whose SHA-256 is in the manifest. A restart refuses to continue if either changed.
+schema_version: "1"
+
+# ---- Cost option (protocol section 10 decision 1, section 6.4). Not chosen yet by the author.
+# Options A and B: pre_fault_s 600, settle_max_s 300. Option C: pre_fault_s 300, settle_max_s 120.
+pre_fault_s: 600            # protocol default 600 s (1.3 item 2). Option C: 300.
+settle_max_s: 300           # protocol default: settle gap uniform on 0 to 300 s (1.3 item 1). Option C: 120.
+trailing_baseline: true     # protocol default true, one hour after block 10 (1.5 item 3). Options B and C: false.
+
+# ---- Values the protocol fixes without data (section 10 decision 2). The pilot may show a mechanical problem
+# ---- with one of them, but must not tune them.
+f5_job_recovery_limit_s: 180    # every expected job RUNNING within 180 s of the last F5 kill (2.4, F5 envelope)
+f8_target_limit_permille: 850   # F8 stressor = 0.85 x memory limit - working set (2.4). Integer per mille, because
+                                # plan params hold only integers and strings (11.3).
+f8_min_stressor_mib: 256        # a stressor under 256 MiB fails the F8 mechanism check (2.4)
+halt_consecutive_failed: 2      # halt after 2 consecutive failed attempts, counted across faults (2.6.5)
+halt_total_failed_gt: 8         # halt when more than 8 attempts have failed in total (2.6.5)
+
+# ---- Section 10 decision 9. FIXED_300 (protocol default): F1 labelled span is onset + 300 s.
+# NOT_READY: the span ends when the target broker is Ready again. NOT_READY is implemented but refused at start,
+# because 11.5 has no end_source code for it. Adding one is a contract change (schema_version bump).
+f1_labelled_span: FIXED_300
+
+# ---- Section 10 decision 4. true (protocol default, recommended): F1 and F2 also require at least one
+# under-replicated partition, read from the verification copy (kafka_broker_copy), as a presence-only check.
+# false: drop the check and rely on the probes, fencing count and pod state alone.
+f1_f2_urp_presence_check: true
+
+# ---- Fixed by the protocol. Listed here only so the offline dry run and the tests can shorten them.
+# `orchestrator run` against a real cluster refuses any value that differs from these.
+fixed:
+  warmup_s: 3600                # 1.5 item 1
+  baseline_s: 86400             # 1.5 item 2, campaigns 1 to 5
+  pilot_baseline_s: 7200        # 1.8 item 3, the pilot collects a two-hour baseline
+  trailing_s: 3600              # 1.5 item 3
+  chunk_s: 3600                 # 11.7: a chunk covers 3,600 s or the remainder of its segment
+  recovery_s: 300               # 1.3 item 5
+  cooldown_s: 300               # 1.3 item 6, author decision 19
+  gate_hold_s: 120              # 1.6: all conditions hold for 120 consecutive seconds
+  gate_timeout_s: 900           # 1.6: remediation after 900 s
+  remediation_timeout_s: 900    # 1.6: another 900 s after remediation
+  apply_max_s: 30               # 1.3 item 3 for Chaos Mesh faults (F6 uses 5 s, fixed in thresholds)
+  redeploy_extra_settle_s: 600  # 1.3 item 1, AFTER_REDEPLOY
+  pause_abandon_s: 7200         # 2.6.6: resume only if the pause lasted under two hours
+  s3_failure_halt_s: 900        # 2.6.5: halt if an S3 upload keeps failing for 15 minutes
+
+# ---- Scrape job names, from rebuild/infra/NAMES.md section 6 (job label of each Prometheus scrape job).
+prometheus_jobs:
+  brokers: kafka-brokers          # NAMES.md 6
+  flink: flink-metrics            # NAMES.md 6
+  loadgen: load-generator         # NAMES.md 6
+  controller: kafka-brokers       # the KafkaController MBeans come from the broker JMX exporter, so they carry
+                                  # job=kafka-brokers; the allowlist keeps them out of every feature source (C10)
+  kubelet: kubelet                # kube-prometheus-stack chart default (NAMES.md 6, "chart defaults"; pilot check)
+  kube_state: kube-state-metrics  # kube-prometheus-stack chart default (pilot check)
+  probes: rebuild-verification    # job label of infra's PodMonitor verification-probes (C9). Never read by the feature
+                                  # export. Infra's own job `verification-consumer` is excluded the same way.
+
+# JMX exporter metric names. They match rebuild/infra/k8s/base/kafka/kafka-metrics-configmap.yaml (lowercaseOutputName,
+# R1 rule names kept; NAMES.md section 6). The pilot confirms each one resolves (protocol 1.8 item 2).
+metric_names:
+  messages_in: kafka_server_brokertopicmetrics_messagesinpersec_total
+  under_replicated: kafka_server_replicamanager_underreplicatedpartitions
+  under_min_isr: kafka_server_replicamanager_underminisrpartitioncount
+  offline_partitions: kafka_controller_kafkacontroller_offlinepartitionscount
+  preferred_imbalance: kafka_controller_kafkacontroller_preferredreplicaimbalancecount
+  fenced_brokers: kafka_controller_kafkacontroller_fencedbrokercount
+  active_controller: kafka_controller_kafkacontroller_activecontrollercount
+  consumer_lag_max: flink_taskmanager_job_task_operator_KafkaSourceReader_KafkaConsumer_records_lag_max
+  tm_pod_regex: "streaming-flink-taskmanager-.*"
+
+expected_kubernetes_version: "1.35"   # 1.7: EKS 1.35

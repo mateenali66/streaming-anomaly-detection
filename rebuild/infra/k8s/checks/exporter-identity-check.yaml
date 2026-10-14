@@ -1,0 +1,85 @@
+# Pilot check (REVIEW4_LIVE_CONTRACT, "Pilot checks" item 1). NOT part of any kustomization: apply it by hand once, right
+# after the workload is deployed, before the orchestrator's first exporter Job (after the first warm-up hour).
+#
+# The exporter Jobs run with service account metric-exporter and automountServiceAccountToken: false. The EKS docs describe
+# the Pod Identity token as its own projected volume, but do not say whether the webhook still adds it when the service
+# account token is not mounted. This Job has exactly that pod shape and asks STS who it is. It prints the role NAME only
+# (never the account ID) and exits 0 only when the role is the campaign's exporter role.
+#
+#   PY=rebuild/infra/.venv/bin/python
+#   $PY rebuild/infra/scripts/render.py --ecr-registry "$REG" --campaign-id "$ID" --workload ECOMMERCE --region us-east-2 \
+#       rebuild/infra/k8s/checks/exporter-identity-check.yaml | kubectl -n streaming apply -f -
+#   kubectl -n streaming wait job/exporter-identity-check --for=condition=complete --timeout=180s
+#   kubectl -n streaming logs job/exporter-identity-check; kubectl -n streaming delete job exporter-identity-check
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: exporter-identity-check
+  namespace: streaming
+  labels:
+    app: exporter-identity-check
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 300
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app: exporter-identity-check
+    spec:
+      serviceAccountName: metric-exporter
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      tolerations:
+        - key: "workload"
+          value: "monitoring"
+          effect: "NoSchedule"
+      nodeSelector:
+        workload: monitoring
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+      containers:
+        - name: check
+          image: ${REF_ORCHESTRATOR}
+          command:
+            - python
+            - -c
+            - |
+              import os, sys
+              import boto3
+              print("AWS_CONTAINER_CREDENTIALS_FULL_URI set:", bool(os.environ.get("AWS_CONTAINER_CREDENTIALS_FULL_URI")))
+              tok = os.environ.get("AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE", "")
+              print("Pod Identity token file present:", bool(tok) and os.path.exists(tok))
+              print("service account token mounted:", os.path.exists("/var/run/secrets/kubernetes.io/serviceaccount/token"))
+              arn = boto3.client("sts").get_caller_identity()["Arn"]
+              role = arn.split(":assumed-role/")[1].split("/")[0] if ":assumed-role/" in arn else "not an assumed role"
+              print("role:", role)
+              sys.exit(0 if role.endswith("-exporter") else 1)
+          env:
+            - name: AWS_REGION
+              value: "${AWS_REGION}"
+            - name: AWS_DEFAULT_REGION
+              value: "${AWS_REGION}"
+            - name: HOME
+              value: /tmp
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi

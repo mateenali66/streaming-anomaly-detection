@@ -1,0 +1,162 @@
+# Verification-channel probe service (protocol 2.3 items 4 to 9). Same image as the orchestrator, command `probes`
+# (orchestrator/probe_service.py). Part of the infra kustomization since rebuild/CONTRACT_CHANGES.md C9; it was a loose file
+# in the orchestrator tree before, so `deploy_workload.sh --phase all` never deployed it.
+#
+# It must run from the start of warm-up to the end of the trailing baseline, on the same 10 s schedule in every
+# segment, so it is deployed with the load (phase `load`), before the orchestrator Job. The orchestrator refuses to start if
+# http://verification-probes.streaming.svc.cluster.local:8000/status does not answer (PROBES_URL).
+#
+# Metrics go to the Prometheus job label `rebuild-verification` (PodMonitor jobLabel below), which the feature export
+# never reads: every feature query carries job="kafka-brokers" or job="flink-metrics" and job!="rebuild-verification".
+# Prometheus Operator API (context7 /websites/prometheus-operator_dev, PodMonitor): `jobLabel` names the pod label whose
+# value becomes the job label; podMetricsEndpoints[].port is a container port NAME. kube-prometheus-stack here sets
+# podMonitorSelectorNilUsesHelmValues: false, so this PodMonitor is selected (pilot check: target is up).
+#
+# ${REF_ORCHESTRATOR} is filled by scripts/render.py, as for the orchestrator Job.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: verification-probes
+  namespace: streaming
+automountServiceAccountToken: true
+---
+# Only what the probes need: list pods to find targets, exec to connect from inside brokers, TaskManagers and the
+# load generator, and run kafka-metadata-quorum.sh in a broker.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: verification-probes
+  namespace: streaming
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["get", "create"] # get for kubectl's WebSocket exec handshake (KEP-4006, REVIEW4_LIVE_CONTRACT L9)
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: verification-probes
+  namespace: streaming
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: verification-probes
+subjects:
+  - kind: ServiceAccount
+    name: verification-probes
+    namespace: streaming
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: verification-probes
+  namespace: streaming
+  labels:
+    app: verification-probes
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: verification-probes
+  template:
+    metadata:
+      labels:
+        app: verification-probes
+        verification-job: rebuild-verification
+    spec:
+      serviceAccountName: verification-probes
+      tolerations:
+        - key: "workload"
+          value: "monitoring"
+          effect: "NoSchedule"
+      nodeSelector:
+        workload: monitoring
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      containers:
+        - name: probes
+          image: ${REF_ORCHESTRATOR}
+          args: ["probes"]
+          env:
+            - name: FLINK_REST_URL
+              value: http://streaming-flink-rest.streaming.svc.cluster.local:8081
+            - name: LOADGEN_STATUS_URL
+              value: http://load-generator.streaming.svc.cluster.local:9102/status
+            - name: KUBECTL_BIN
+              value: /usr/local/bin/kubectl
+            - name: HOME
+              value: /tmp
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
+          ports:
+            - name: http
+              containerPort: 8000
+          readinessProbe:
+            httpGet:
+              path: /status
+              port: http
+            periodSeconds: 10
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: data
+          emptyDir:
+            sizeLimit: 2Gi   # probes.jsonl, so samples survive a container restart
+        - name: tmp
+          emptyDir:
+            sizeLimit: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: verification-probes
+  namespace: streaming
+  labels:
+    app: verification-probes
+spec:
+  selector:
+    app: verification-probes
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: verification-probes
+  namespace: streaming
+spec:
+  jobLabel: verification-job
+  selector:
+    matchLabels:
+      app: verification-probes
+  podMetricsEndpoints:
+    - port: http
+      path: /metrics
+      interval: 10s

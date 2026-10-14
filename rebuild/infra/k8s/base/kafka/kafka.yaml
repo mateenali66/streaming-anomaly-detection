@@ -1,0 +1,136 @@
+# Strimzi Kafka cluster `streaming-kafka`, KRaft, node pool `brokers` (combined controller + broker, 3 nodes, one per node).
+# Names are an interface: pods streaming-kafka-brokers-0..2, bootstrap service streaming-kafka-kafka-bootstrap:9092.
+#
+# Docs relied on (context7 /strimzi/strimzi-kafka-operator, checked 13 Oct 2026): KafkaNodePool spec (replicas, roles,
+# storage persistent-claim size/class/deleteClaim), strimzi.io/cluster label, Kafka spec.kafka.metricsConfig
+# jmxPrometheusExporter with a ConfigMap key, strimzi.io/kraft and strimzi.io/node-pools annotations.
+#
+# Changes against R1 (REVIEW3 A5, A6, G):
+#   - PVC 300 Gi, not 200 Gi. Topic retention is fixed in topics.yaml.
+#   - images by digest from ECR (spec.kafka.image, entity operator images)
+#   - the entity operator is kept OFF the Kafka nodes
+#   - the pod anti-affinity selects the brokers by pool label
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaNodePool
+metadata:
+  name: brokers
+  namespace: streaming
+  labels:
+    strimzi.io/cluster: streaming-kafka
+spec:
+  replicas: 3
+  roles:
+    - controller
+    - broker
+  storage:
+    type: persistent-claim
+    size: 300Gi
+    class: gp3
+    deleteClaim: true # works only while the Strimzi operator runs. scripts/pre_destroy.sh also deletes every PVC and proves the volumes are gone.
+  template:
+    pod:
+      tolerations:
+        - key: "workload"
+          value: "kafka"
+          effect: "NoSchedule"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: workload
+                    operator: In
+                    values:
+                      - kafka
+        # one broker per node (page cache isolation)
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  strimzi.io/cluster: streaming-kafka
+                  strimzi.io/pool-name: brokers
+              topologyKey: kubernetes.io/hostname
+  resources:
+    requests:
+      cpu: "1"
+      memory: 8Gi
+    limits:
+      cpu: "3"
+      memory: 24Gi
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: Kafka
+metadata:
+  name: streaming-kafka
+  namespace: streaming
+  annotations:
+    strimzi.io/kraft: enabled
+    strimzi.io/node-pools: enabled
+spec:
+  kafka:
+    version: 3.9.0
+    metadataVersion: "3.9-IV0"
+    image: ${REF_STRIMZI_KAFKA}
+    listeners:
+      - name: plain
+        port: 9092
+        type: internal
+        tls: false
+      - name: tls
+        port: 9093
+        type: internal
+        tls: true
+    config:
+      # replication and durability
+      offsets.topic.replication.factor: 3
+      transaction.state.log.replication.factor: 3
+      transaction.state.log.min.isr: 2
+      default.replication.factor: 3
+      min.insync.replicas: 2
+      # defaults for topics created without an explicit config (none are: auto-create is off)
+      num.partitions: 12
+      log.retention.hours: 2
+      log.segment.bytes: 536870912
+      log.retention.check.interval.ms: 60000
+      log.cleaner.enable: true
+      # Per-partition cap. raw-events and enriched-events hold 12 partitions x 3 replicas each, so 24 replicas per broker;
+      # at 2 h retention the real size is far below the cap (topics.yaml, README disk budget).
+      log.retention.bytes: 10000000000
+      auto.create.topics.enable: false
+    metricsConfig:
+      type: jmxPrometheusExporter
+      valueFrom:
+        configMapKeyRef:
+          name: kafka-metrics-config
+          key: kafka-metrics-config.yml
+    jvmOptions:
+      -Xms: 4096m
+      -Xmx: 4096m
+  entityOperator:
+    template:
+      pod:
+        tolerations:
+          - key: "workload"
+            value: "monitoring"
+            effect: "NoSchedule"
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: workload
+                      operator: In
+                      values:
+                        - monitoring
+    topicOperator:
+      image: ${REF_STRIMZI_OPERATOR}
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+    userOperator:
+      image: ${REF_STRIMZI_OPERATOR}
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi

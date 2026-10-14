@@ -1,0 +1,9 @@
+# Copy to terraform.tfvars (gitignored) and fill in. Never commit real values.
+account_id  = "000000000000"
+owner       = "your-team-alias"
+alert_email = "alerts@example.org"
+# Results bucket suffix: fixed, random, chosen ONCE before the first apply (python3 -c 'import secrets; print(secrets.token_hex(4))').
+bucket_suffix = "0a1b2c3d"
+# region      = "us-east-2"
+# budget_limit_usd = 1200
+# Cost allocation tags are activated by the payer account, not here (REVIEW4 M7).

@@ -1,0 +1,83 @@
+# Topics for both workloads (same names as R1). Auto-create is off, so every topic is declared here, dead-letter included.
+#
+# REVIEW3 A6: R1 gave every high-volume topic retention.ms = 24 h, which overrode the broker's 2 h default. On the IoT workload
+# raw-events plus enriched-events could then fill a 200 Gi volume in about 15 h, before the 24 h baseline ended.
+# Now raw-events and enriched-events keep 2 h (7200000 ms), the volumes are 300 Gi, and retention.bytes stays as the cap.
+# The pilot must show broker volume use below 70% after 4 h at full IoT load (kubelet_volume_stats_used_bytes).
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: raw-events
+  namespace: streaming
+  labels:
+    strimzi.io/cluster: streaming-kafka
+spec:
+  partitions: 12
+  replicas: 3
+  config:
+    retention.ms: "7200000"
+    retention.bytes: "10000000000"
+    min.insync.replicas: "2"
+    cleanup.policy: delete
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: enriched-events
+  namespace: streaming
+  labels:
+    strimzi.io/cluster: streaming-kafka
+spec:
+  partitions: 12
+  replicas: 3
+  config:
+    retention.ms: "7200000"
+    retention.bytes: "10000000000"
+    min.insync.replicas: "2"
+    cleanup.policy: delete
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: aggregated-metrics
+  namespace: streaming
+  labels:
+    strimzi.io/cluster: streaming-kafka
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "86400000"
+    min.insync.replicas: "2"
+    cleanup.policy: delete
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: fraud-alerts
+  namespace: streaming
+  labels:
+    strimzi.io/cluster: streaming-kafka
+spec:
+  partitions: 3
+  replicas: 3
+  config:
+    retention.ms: "86400000"
+    min.insync.replicas: "2"
+    cleanup.policy: delete
+---
+# Pre-created: the enrichment jobs write malformed records here and auto-create is off. F6 verification and the recovery gate read it.
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: dead-letter
+  namespace: streaming
+  labels:
+    strimzi.io/cluster: streaming-kafka
+spec:
+  partitions: 3
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+    cleanup.policy: delete

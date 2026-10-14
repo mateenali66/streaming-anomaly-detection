@@ -1,0 +1,17 @@
+# Pinned tool environment for `orchestrator plan` and `orchestrator thresholds` (rebuild/integration/plan_tool.sh).
+# The versions are the orchestrator image's (rebuild/infra/images/orchestrator/requirements.in); the plan records
+# numpy_version and every start of the orchestrator compares plan bytes, so a plan drawn with any other NumPy is refused.
+# Hashes: every CPython 3.12 wheel of these exact versions for macOS (arm64, x86_64) and Linux (aarch64, x86_64),
+# from https://pypi.org/pypi/<name>/<version>/json. Install with --require-hashes --only-binary=:all:.
+numpy==2.3.5 \
+    --hash=sha256:74ae7b798248fe62021dbf3c914245ad45d1a6b0cb4a29ecb4b31d0bfbc4cc3e \
+    --hash=sha256:ee3888d9ff7c14604052b2ca5535a30216aa0a58e948cdd3eeb8d3415f638769 \
+    --hash=sha256:612a95a17655e213502f60cfb9bf9408efdc9eb1d5f50535cc6eb365d11b42b5 \
+    --hash=sha256:3101e5177d114a593d79dd79658650fe28b5a0d8abeb8ce6f437c0e6df5be1a4 \
+    --hash=sha256:8b973c57ff8e184109db042c842423ff4f60446239bd585a5131cc47f06f789d \
+    --hash=sha256:0d8163f43acde9a73c2a33605353a4f1bc4798745a8b1d73183b28e5b435ae28
+PyYAML==6.0.3 \
+    --hash=sha256:7f047e29dcae44602496db43be01ad42fc6f1cc0d8cd6c83d342306c32270196 \
+    --hash=sha256:fc09d0aa354569bc501d4e787133afc08552722d3ab34836a80547331bb5d4a0 \
+    --hash=sha256:9149cad251584d5fb4981be1ecde53a1ca46c891a79788c0df828d2f166bda28 \
+    --hash=sha256:ba1cc08a7ccde2d2ec775841541641e4548226580ab850948cbfda66a1befcdc

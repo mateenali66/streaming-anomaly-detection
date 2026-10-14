@@ -1,0 +1,8 @@
+# Copy to backend.hcl (gitignored). The state bucket is created by hand (versioned, encrypted,
+# public access blocked) and its name contains the account ID, so it is never committed.
+# Credentials come from the environment (export AWS_PROFILE=...), not from this file.
+bucket       = "REPLACE-state-bucket"
+key          = "network/terraform.tfstate"
+region       = "us-east-2"
+encrypt      = true
+use_lockfile = true # S3 native locking, Terraform >= 1.10

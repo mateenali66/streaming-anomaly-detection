@@ -1,0 +1,7 @@
+# Copy to terraform.tfvars (gitignored).
+account_id  = "000000000000"
+owner       = "your-team-alias"
+vpc_cidr    = "10.123.0.0/16"   # choose one that overlaps nothing in the account (scripts/discover.py)
+workload_az = "us-east-2a"      # a zone offering both r6g.xlarge and r6g.2xlarge
+control_plane_azs = ["us-east-2b", "us-east-2c"]
+python_bin  = "/ABSOLUTE/PATH/rebuild/infra/.venv/bin/python" # required: the destroy guard (scripts/network_guard.py) needs boto3

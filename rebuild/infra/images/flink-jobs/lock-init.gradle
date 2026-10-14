@@ -1,0 +1,24 @@
+// Gradle init script: dependency locking for every project, with the lock files kept OUTSIDE the application source
+// tree (streaming-app/ is not modified). The build machine runs it inside the pinned builder image (Dockerfile).
+//
+//   write locks:  gradle -I lock-init.gradle -Dlocks.dir=<dir> --write-locks resolveAndLockAll
+//   build:        gradle -I lock-init.gradle -Dlocks.dir=<dir> shadowJar     (STRICT: any version drift fails the build)
+//
+// Docs (https://docs.gradle.org/current/userguide/dependency_locking.html): lockAllConfigurations(), lockMode,
+// lockFile, and the resolveAndLockAll task pattern for writing locks.
+allprojects {
+    dependencyLocking {
+        lockAllConfigurations()
+        lockMode = LockMode.STRICT
+        lockFile = file("${System.getProperty('locks.dir')}/${project.path == ':' ? 'root' : project.name}.lockfile")
+    }
+    tasks.register('resolveAndLockAll') {
+        notCompatibleWithConfigurationCache("Filters configurations at execution time")
+        doFirst {
+            assert gradle.startParameter.writeDependencyLocks
+        }
+        doLast {
+            configurations.findAll { it.canBeResolved }.each { it.resolve() }
+        }
+    }
+}

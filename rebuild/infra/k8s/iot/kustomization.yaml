@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# IoT workload: base + workload ConfigMaps + load generator settings + Flink submit Job, and a bigger load generator.
+resources:
+  - ../base
+  - workload-config.yaml
+  - loadgen-config.yaml
+  - flink-submit-job.yaml
+patches:
+  - target:
+      kind: Deployment
+      name: load-generator
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources
+        value:
+          requests:
+            cpu: "1"
+            memory: 1Gi
+          limits:
+            cpu: "2"
+            memory: 2Gi

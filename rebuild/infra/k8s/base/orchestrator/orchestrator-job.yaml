@@ -1,0 +1,217 @@
+# In-cluster orchestrator (REVIEW3 A8, A9, C4, C6; protocol 2.7 item 6).
+#
+# - WORKLOAD has NO default: it comes from the ConfigMap `workload-config` (key WORKLOAD) with no `optional`, so a cluster
+#   without that ConfigMap cannot start the orchestrator (CreateContainerConfigError). The image must also refuse an unset or
+#   unknown WORKLOAD (images/README in README.md, "Orchestrator image interface").
+# - NO activeDeadlineSeconds. A campaign is about 81 h (protocol 1.9). The Job stops when the orchestrator exits.
+# - backoffLimit 0 and restartPolicy Never: a crashed orchestrator is never silently restarted into a half-run campaign.
+#   Resume is a deliberate `scripts/deploy_workload.sh --phase run --recreate-job --resume` on the same PVC (protocol 2.6 item 6),
+#   which renders `run --resume` into args below; the pilot's `--fault` and `--block` reach args the same way
+#   (scripts/orchestrator_args.py, REVIEW4 B6). The alert-only CronJob campaign-watchdog reports a failed Job (C6).
+# - Nothing installs at start. kubectl 1.35, boto3, pyarrow, numpy, pandas and confluent-kafka are in the image.
+# - The manifest file /manifest/manifest.json is mirrored to s3://<bucket>/campaign/<id>/manifest/manifest.json every 60 s by
+#   a native sidecar (initContainer with restartPolicy Always, GA in Kubernetes 1.33), which also syncs one last time when the
+#   Job's main container ends. It mirrors THAT ONE FILE and nothing else (--exclude "*" --include "manifest.json"): the
+#   orchestrator's internal resume state lives in /manifest/state/ and is never part of the record (11.7, rebuild/
+#   CONTRACT_CHANGES.md C1), and a temporary manifest.json.tmp can never reach the bucket. The orchestrator uploads the
+#   manifest itself after every write; the sidecar is the copy that still runs when the orchestrator cannot. AWS CLI v2
+#   (>= 2.15.0 for Pod Identity) from the mirrored image, NO --delete, so it can never remove anything from the bucket.
+# - The environment is the one interface of protocol 11.11 (CONTRACT_CHANGES C5): WORKLOAD, CAMPAIGN_ID, CAMPAIGN_INDEX,
+#   PLAN_SHA256, RESULTS_BUCKET and RESULTS_PREFIX=campaign/<id>, all required, plus the four inputs mounted from ConfigMap
+#   campaign-config at /config (plan.json, thresholds.json, versions.json, images.lock.yaml; scripts/deploy_workload.sh).
+#
+# Rendered by scripts/render.py: the image references (REF_ORCHESTRATOR, REF_AWS_CLI, REF_F6_INJECTOR), CAMPAIGN_ID,
+# CAMPAIGN_INDEX, PLAN_SHA256, RESULTS_BUCKET, AWS_REGION and SNS_TOPIC_ARN. A name with no value stops the render.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: campaign-manifest
+  namespace: streaming
+  labels:
+    app: campaign-orchestrator
+    infra.phase: workload # bound when the Job's pod is scheduled (WaitForFirstConsumer), so the volume is created in the node's zone
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: gp3
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: campaign-orchestrator
+  namespace: streaming
+  labels:
+    app: campaign-orchestrator
+    infra.phase: run
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app: campaign-orchestrator
+    spec:
+      serviceAccountName: campaign-orchestrator
+      automountServiceAccountToken: true
+      restartPolicy: Never
+      terminationGracePeriodSeconds: 180
+      tolerations:
+        - key: "workload"
+          value: "monitoring"
+          effect: "NoSchedule"
+      nodeSelector:
+        workload: monitoring
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      initContainers:
+        - name: s3-sync
+          image: ${REF_AWS_CLI}
+          restartPolicy: Always # native sidecar
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              SRC=/manifest
+              DST="s3://$RESULTS_BUCKET/$RESULTS_PREFIX/manifest/"
+              STATUS="$SRC/.s3sync.status"
+              # Only manifest.json (11.7 manifest/manifest.json). Later filters win, so everything else is excluded,
+              # including state/ (resume state), manifest.json.tmp, .s3sync.status and lost+found/.
+              sync_once() {
+                if aws s3 sync "$SRC" "$DST" --no-progress --only-show-errors --exclude "*" --include "manifest.json"; then
+                  echo "ok $(date +%s)" > "$STATUS"
+                else
+                  echo "fail $(date +%s) rc=$?" > "$STATUS"
+                  echo "s3 sync failed" >&2
+                fi
+              }
+              trap 'sync_once; exit 0' TERM INT
+              while true; do
+                sync_once
+                sleep 60 &
+                wait $!
+              done
+          env:
+            - name: AWS_DEFAULT_REGION
+              value: "${AWS_REGION}"
+            - name: RESULTS_BUCKET
+              value: "${RESULTS_BUCKET}"
+            - name: RESULTS_PREFIX
+              value: "campaign/${CAMPAIGN_ID}"
+          volumeMounts:
+            - name: manifest
+              mountPath: /manifest
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+      containers:
+        - name: orchestrator
+          image: ${REF_ORCHESTRATOR}
+          imagePullPolicy: IfNotPresent
+          args: ["run"] # ENTRYPOINT is python -u -m orchestrator, see README "Orchestrator image interface"
+          env:
+            - name: WORKLOAD
+              valueFrom:
+                configMapKeyRef:
+                  name: workload-config
+                  key: WORKLOAD
+            - name: FLINK_EXPECTED_JOBS
+              valueFrom:
+                configMapKeyRef:
+                  name: workload-config
+                  key: FLINK_EXPECTED_JOBS
+            - name: LOADGEN_BASE_RATE
+              valueFrom:
+                configMapKeyRef:
+                  name: workload-config
+                  key: LOADGEN_BASE_RATE
+            - name: CAMPAIGN_ID
+              value: "${CAMPAIGN_ID}"
+            - name: CAMPAIGN_INDEX
+              value: "${CAMPAIGN_INDEX}"
+            - name: PLAN_SHA256
+              value: "${PLAN_SHA256}"
+            - name: PLAN_PATH
+              value: /config/plan.json
+            - name: THRESHOLDS_PATH
+              value: /config/thresholds.json
+            - name: VERSIONS_FILE
+              value: /config/versions.json
+            - name: IMAGES_LOCK_FILE
+              value: /config/images.lock.yaml
+            - name: RESULTS_BUCKET
+              value: "${RESULTS_BUCKET}"
+            - name: RESULTS_PREFIX
+              value: "campaign/${CAMPAIGN_ID}"
+            - name: AWS_REGION
+              value: "${AWS_REGION}"
+            - name: AWS_DEFAULT_REGION
+              value: "${AWS_REGION}"
+            - name: SNS_TOPIC_ARN
+              value: "${SNS_TOPIC_ARN}"
+            - name: PROMETHEUS_URL
+              value: http://prometheus-kube-prometheus-prometheus.observability.svc.cluster.local:9090
+            - name: KAFKA_BOOTSTRAP
+              value: streaming-kafka-kafka-bootstrap.streaming.svc.cluster.local:9092
+            - name: FLINK_REST_URL
+              value: http://streaming-flink-rest.streaming.svc.cluster.local:8081
+            - name: LOADGEN_STATUS_URL
+              value: http://load-generator.streaming.svc.cluster.local:9102/status
+            - name: PROBES_URL
+              value: http://verification-probes.streaming.svc.cluster.local:8000
+            - name: NAMESPACE
+              value: streaming
+            - name: MANIFEST_DIR
+              value: /manifest
+            - name: F6_INJECTOR_IMAGE
+              value: "${REF_F6_INJECTOR}"
+            - name: KUBECTL_BIN
+              value: /usr/local/bin/kubectl
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
+            - name: HOME
+              value: /tmp
+          volumeMounts:
+            - name: manifest
+              mountPath: /manifest
+            - name: campaign-config
+              mountPath: /config
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+              ephemeral-storage: 2Gi
+            limits:
+              cpu: "1"
+              memory: 2Gi
+              ephemeral-storage: 5Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: manifest
+          persistentVolumeClaim:
+            claimName: campaign-manifest
+        - name: campaign-config
+          configMap:
+            name: campaign-config # plan.json, thresholds.json, versions.json, images.lock.yaml (scripts/deploy_workload.sh)
+        - name: tmp
+          emptyDir:
+            sizeLimit: 2Gi

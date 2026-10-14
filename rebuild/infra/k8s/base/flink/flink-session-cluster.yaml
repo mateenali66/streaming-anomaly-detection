@@ -1,0 +1,100 @@
+# Flink session cluster `streaming-flink` (Flink Kubernetes Operator, native mode). No job in the spec: jobs are submitted
+# by flink/submit-jobs.sh (a Job per workload) so nothing but the orchestrator ever resubmits them. NO watchdog (REVIEW1 A1,
+# audit section 7 item 9): R1's CronJob would have healed F5 and F8 behind the orchestrator and, on an IoT cluster,
+# submitted the wrong jobs.
+#
+# Names (interface): FlinkDeployment streaming-flink, REST service streaming-flink-rest:8081, pods labelled
+# app=streaming-flink and component=jobmanager|taskmanager, service account `flink` (created by the operator chart).
+#
+# Docs relied on (context7 /apache/flink-kubernetes-operator and Flink 1.19 docs, checked 13 Oct 2026):
+#   - a session cluster is a FlinkDeployment with no spec.job; spec.mode: native; in native mode spec.taskManager.replicas has no effect
+#   - S3 filesystem: copy opt/flink-s3-fs-hadoop-<ver>.jar into plugins/s3-fs-hadoop/ (done in images/flink-jobs/Dockerfile);
+#     flink-s3-fs-hadoop 1.19.3 bundles AWS SDK for Java 1.12.779, which is above the Pod Identity minimum 1.12.746
+#   - restart-strategy.type failure-rate and its keys
+#   - the S3 plugin forwards keys with the prefixes s3., s3a. and fs.s3a. to Hadoop S3A
+#
+# What changed against R1:
+#   - checkpoints AND savepoints on S3 under scratch/<campaign>/ through Pod Identity (R1: file:///opt/flink/checkpoints, a
+#     TaskManager's own disk, so a lost TaskManager made the stateful jobs unrestorable: 24 R1 runs)
+#   - failure-rate restart strategy instead of fixed-delay with 10 attempts for the whole life of a job
+#   - checkpoints are RETAINED on cancel, so a scripted remediation can restore from the last checkpoint
+#   - image by digest from ECR
+#   - slotmanager.number-of-slots.min 12: three TaskManagers stay up even with no job (REVIEW4_LIVE_CONTRACT L4)
+#
+# The JOB settings (parallelism, checkpointing, state backend, restart strategy) do NOT come from this file: the Flink CLI
+# builds the JobGraph from its own process's configuration. images/flink-jobs/run-job.sh passes them with -p and -D on every
+# submit, from the flink-submit pod and from the orchestrator's remediation alike (L1). The same values stay here so the
+# session default agrees, and tests/check_manifests.py checks that both lists match.
+apiVersion: flink.apache.org/v1beta1
+kind: FlinkDeployment
+metadata:
+  name: streaming-flink
+  namespace: streaming
+spec:
+  image: ${REF_FLINK_JOBS}
+  flinkVersion: v1_19
+  mode: native
+  serviceAccount: flink
+  flinkConfiguration:
+    # ---- checkpointing (as R1) ----
+    execution.checkpointing.interval: "60000"
+    execution.checkpointing.mode: EXACTLY_ONCE
+    execution.checkpointing.timeout: "120000"
+    execution.checkpointing.min-pause: "30000"
+    execution.checkpointing.externalized-checkpoint-retention: RETAIN_ON_CANCELLATION
+    # ---- state: RocksDB, incremental, checkpoints and savepoints on S3 ----
+    state.backend.type: rocksdb
+    state.backend.incremental: "true"
+    # 11.7: scratch/<campaign_id>/flink-checkpoints/ and flink-savepoints/ (7-day expiry, never part of the record)
+    state.checkpoints.dir: s3://${RESULTS_BUCKET}/scratch/${CAMPAIGN_ID}/flink-checkpoints
+    state.savepoints.dir: s3://${RESULTS_BUCKET}/scratch/${CAMPAIGN_ID}/flink-savepoints
+    # ---- S3 access: Pod Identity container credentials ----
+    # The default Hadoop provider chain also reaches the container provider, but the chain is long and its failure mode is a
+    # slow timeout against the node's instance metadata. Name the provider so a credential problem fails fast.
+    fs.s3a.aws.credentials.provider: com.amazonaws.auth.EC2ContainerCredentialsProviderWrapper
+    fs.s3a.endpoint.region: ${AWS_REGION}
+    # Keep S3A from deleting "directory marker" objects in parent paths. The Flink role may only touch scratch/<campaign>/.
+    fs.s3a.directory.marker.retention: keep
+    # ---- JVM flags for Java 17 (Kryo) ----
+    env.java.opts.all: "--add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.lang.invoke=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.nio=ALL-UNNAMED --add-opens java.base/sun.nio.ch=ALL-UNNAMED --add-opens java.base/sun.security.ssl=ALL-UNNAMED"
+    # ---- restart strategy ----
+    # fixed-delay with 10 attempts is a budget for the whole life of a job. F5, F7 and F8 each cost several restarts, so jobs
+    # eventually failed for good in R1. failure-rate allows 40 failures in any 10 minutes, then fails the job. A job with no
+    # shuffle restarts four regions per TaskManager loss, so five F5 kills on one such job make 20 (pilot, decision 38).
+    restart-strategy.type: failure-rate
+    restart-strategy.failure-rate.max-failures-per-interval: "40"
+    restart-strategy.failure-rate.failure-rate-interval: "10 min"
+    restart-strategy.failure-rate.delay: "30 s"
+    # ---- metrics (Prometheus reporter, scraped on 9249) ----
+    metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
+    metrics.reporter.prom.port: "9249"
+    # ---- keep three TaskManagers alive without jobs (L4) ----
+    # In native session mode Flink starts TaskManagers only for slots that jobs request and releases idle ones. After a
+    # redeploy there are no jobs yet, so no TaskManager would start. 12 slots = 3 TaskManagers x 4 slots, the R1 steady state
+    # (three jobs at parallelism 4). Flink 1.19 configuration: slotmanager.number-of-slots.min (not used by standalone clusters).
+    slotmanager.number-of-slots.min: "12"
+    # ---- sizing (as R1) ----
+    parallelism.default: "4"
+    taskmanager.memory.process.size: "8192m"
+    taskmanager.memory.managed.fraction: "0.4"
+    taskmanager.numberOfTaskSlots: "4"
+    taskmanager.network.memory.fraction: "0.1"
+    taskmanager.network.memory.min: "64mb"
+    taskmanager.network.memory.max: "1gb"
+  podTemplate:
+    spec:
+      tolerations:
+        - key: "workload"
+          value: "flink"
+          effect: "NoSchedule"
+      nodeSelector:
+        workload: flink
+  jobManager:
+    resource:
+      memory: "4096m"
+      cpu: 1
+    replicas: 1
+  taskManager:
+    resource:
+      memory: "8192m"
+      cpu: 2

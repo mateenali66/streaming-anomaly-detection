@@ -1,0 +1,108 @@
+# Alert-only watchdog (protocol 6.5 item 4; REVIEW4_OPERATIONS C6). Every 10 minutes one short pod on the monitoring node
+# checks the orchestrator Job and the age of the campaign manifest in S3, and publishes to the alert topic when the Job has
+# failed, the orchestrator container ended with a non-zero code, or a RUNNING manifest has not changed for 2 h. It never
+# restarts, resubmits or deletes anything (watchdog.py, mounted from ConfigMap campaign-watchdog).
+#
+# - Service account campaign-orchestrator: the orchestrator's Pod Identity role (S3 read under campaign/<id>/, sns:Publish)
+#   and its Role (jobs and pods get and list; get, update and patch on ConfigMap campaign-watchdog-state only).
+# - No rebuild/campaign or rebuild/attempt label: the orchestrator counts and deletes objects with those labels, and this
+#   CronJob's pods must never look like campaign resources.
+# - Same image as the orchestrator, ENTRYPOINT replaced by `python -u /watchdog/watchdog.py`. Nothing installs at start.
+# - `scripts/deploy_workload.sh --phase run` applies it with the orchestrator Job; `--phase stop` suspends it.
+# Rendered by scripts/render.py: REF_ORCHESTRATOR, CAMPAIGN_ID, RESULTS_BUCKET, AWS_REGION, SNS_TOPIC_ARN.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: campaign-watchdog
+  namespace: streaming
+  labels:
+    app: campaign-watchdog
+    infra.phase: run
+spec:
+  schedule: "*/10 * * * *"
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 300
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  suspend: false
+  jobTemplate:
+    metadata:
+      labels:
+        app: campaign-watchdog
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 240
+      ttlSecondsAfterFinished: 3600
+      template:
+        metadata:
+          labels:
+            app: campaign-watchdog
+        spec:
+          serviceAccountName: campaign-orchestrator
+          automountServiceAccountToken: true
+          restartPolicy: Never
+          tolerations:
+            - key: "workload"
+              value: "monitoring"
+              effect: "NoSchedule"
+          nodeSelector:
+            workload: monitoring
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+          containers:
+            - name: watchdog
+              image: ${REF_ORCHESTRATOR}
+              imagePullPolicy: IfNotPresent
+              command: ["python", "-u", "/watchdog/watchdog.py"]
+              env:
+                - name: CAMPAIGN_ID
+                  value: "${CAMPAIGN_ID}"
+                - name: RESULTS_BUCKET
+                  value: "${RESULTS_BUCKET}"
+                - name: RESULTS_PREFIX
+                  value: "campaign/${CAMPAIGN_ID}"
+                - name: SNS_TOPIC_ARN
+                  value: "${SNS_TOPIC_ARN}"
+                - name: AWS_REGION
+                  value: "${AWS_REGION}"
+                - name: AWS_DEFAULT_REGION
+                  value: "${AWS_REGION}"
+                - name: NAMESPACE
+                  value: streaming
+                - name: KUBECTL_BIN
+                  value: /usr/local/bin/kubectl
+                - name: WATCHDOG_STALE_S
+                  value: "7200"
+                - name: WATCHDOG_REMIND_S
+                  value: "7200"
+                - name: HOME
+                  value: /tmp
+                - name: PYTHONDONTWRITEBYTECODE
+                  value: "1"
+              volumeMounts:
+                - name: script
+                  mountPath: /watchdog
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  cpu: 500m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+          volumes:
+            - name: script
+              configMap:
+                name: campaign-watchdog
+            - name: tmp
+              emptyDir:
+                sizeLimit: 64Mi

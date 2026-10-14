@@ -1,0 +1,43 @@
+# Chaos Mesh 2.8.4. Runtime containerd and the containerd socket (EKS AL2023, containerd 2.x).
+# Docs relied on (context7 /chaos-mesh/chaos-mesh, checked 13 Oct 2026):
+#   helm/chaos-mesh/README.md "Container runtime": chaosDaemon.runtime=containerd, socketPath=/run/containerd/containerd.sock
+#
+# IOChaos is not used (F3 dropped: toda is x86 only). Dashboard and DNS server are not installed.
+# The controller's own admission webhook is part of Chaos Mesh and cannot be disabled; it uses a self-generated
+# certificate and does not need cert-manager.
+images:
+  registry: ${ECR_REGISTRY}
+  tag: "${TAG_CHAOS_MESH}"
+
+clusterScoped: true
+enableProfiling: false
+
+controllerManager:
+  replicaCount: 1
+  image:
+    repository: ${PATH_CHAOS_MESH}
+    tag: "${TAG_CHAOS_MESH}@${DIGEST_CHAOS_MESH}"
+  tolerations:
+    - key: "workload"
+      operator: "Exists"
+      effect: "NoSchedule"
+  nodeSelector:
+    workload: monitoring
+
+# The daemon must run on EVERY node (it needs to reach the target pod's container runtime and network namespace).
+chaosDaemon:
+  image:
+    repository: ${PATH_CHAOS_DAEMON}
+    tag: "${TAG_CHAOS_DAEMON}@${DIGEST_CHAOS_DAEMON}"
+  runtime: containerd
+  socketPath: /run/containerd/containerd.sock
+  tolerations:
+    - key: "workload"
+      operator: "Exists"
+      effect: "NoSchedule"
+
+dashboard:
+  create: false
+
+dnsServer:
+  create: false

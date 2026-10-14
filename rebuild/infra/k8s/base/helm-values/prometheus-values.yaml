@@ -1,0 +1,295 @@
+# kube-prometheus-stack 69.8.0. Everything runs on the monitoring node except node-exporter (every node).
+# dollar-brace NAME placeholders come from images.lock.yaml (Terraform templatefile or scripts/render_values.sh).
+# Do not add any other dollar-brace text to this file.
+#
+# What this file fixes against R1 (REVIEW1 B11, REVIEW2 item 7 and 6, REVIEW3 A4):
+#   - series are labelled by STABLE POD NAME (`instance` and `pod`), never by pod IP, so a restarted broker keeps its series
+#   - cAdvisor relabelling keeps container CPU, working set, OOM events and the memory limit (the chart drops container_spec_*)
+#   - kube-state-metrics keeps kube_pod_container_resource_limits (default collectors, left enabled)
+#   - admission webhooks and the certgen patch job are off (the certgen image is retired)
+#   - the PriorityClass named below is created by Terraform BEFORE this release (platform.tf)
+#   - control-plane scrape targets that EKS does not expose are off, so "all targets up" can actually hold
+#   - Grafana and Alertmanager are off: nobody watches six clusters, and it removes a password and three images
+#   - no account ID in any stored label (decision 29, REVIEW4 C1): the ECR host <account>.dkr.ecr.<region>.amazonaws.com is
+#     cut from the `image` labels of cAdvisor and from `image`, `image_spec` and `image_id` of kube-state-metrics at scrape
+#     time, before anything reaches the TSDB or an export. The path, tag and digest stay, so no two series merge.
+#
+# Docs relied on: chart values.yaml of kube-prometheus-stack 69.8.0 (helm pull, read locally), Prometheus
+# relabel_configs semantics (instance defaults to __address__ only when not set by relabelling).
+
+defaultRules:
+  create: false # no alerting in this study; rule evaluation every 10 s adds noise to the monitoring node
+
+alertmanager:
+  enabled: false
+
+grafana:
+  enabled: false
+  forceDeployDashboards: false
+
+kubeEtcd:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false # metrics bind to 127.0.0.1 on EKS
+
+prometheusOperator:
+  admissionWebhooks:
+    enabled: false
+    patch:
+      enabled: false
+  tls:
+    enabled: false
+  image:
+    registry: ${ECR_REGISTRY}
+    repository: ${PATH_PROMETHEUS_OPERATOR}
+    tag: ${TAG_PROMETHEUS_OPERATOR}
+    sha: ${SHA_PROMETHEUS_OPERATOR}
+  prometheusConfigReloader:
+    image:
+      registry: ${ECR_REGISTRY}
+      repository: ${PATH_PROMETHEUS_CONFIG_RELOADER}
+      tag: ${TAG_PROMETHEUS_CONFIG_RELOADER}
+      sha: ${SHA_PROMETHEUS_CONFIG_RELOADER}
+  tolerations:
+    - key: "workload"
+      operator: "Exists"
+      effect: "NoSchedule"
+  nodeSelector:
+    workload: monitoring
+
+kubelet:
+  serviceMonitor:
+    # The chart default drops container_spec.* (memory limit) and container_cpu_cfs_throttled_seconds_total.
+    # F4 and F8 are verified from container CPU, working set and the limit, so keep them.
+    cAdvisorMetricRelabelings:
+      - sourceLabels: [__name__]
+        action: drop
+        regex: 'container_cpu_(load_average_10s|system_seconds_total|user_seconds_total)'
+      - sourceLabels: [__name__]
+        action: drop
+        regex: 'container_fs_(io_current|io_time_seconds_total|io_time_weighted_seconds_total|reads_merged_total|sector_reads_total|sector_writes_total|writes_merged_total)'
+      - sourceLabels: [__name__]
+        action: drop
+        regex: 'container_memory_(mapped_file|swap)'
+      - sourceLabels: [__name__]
+        action: drop
+        regex: 'container_(file_descriptors|tasks_state|threads_max)'
+      - sourceLabels: [__name__, scope]
+        action: drop
+        regex: 'container_memory_failures_total;hierarchy'
+      - sourceLabels: [__name__, interface]
+        action: drop
+        regex: 'container_network_.*;(cali|cilium|cni|lxc|nodelocaldns|tunl).*'
+      # Drop only the spec series nobody needs. container_spec_memory_limit_bytes and container_spec_cpu_quota stay.
+      - sourceLabels: [__name__]
+        action: drop
+        regex: 'container_spec_(cpu_shares|cpu_period|memory_reservation_limit_bytes|memory_swap_limit_bytes)'
+      - sourceLabels: [id, pod]
+        action: drop
+        regex: '.+;'
+      # REVIEW4 C1: cut the registry host (it carries the account ID) from `image`. Pod-level series have an empty image and
+      # do not match, so they keep their identity. The pause container's image (an AWS-owned ECR account) is cut the same way.
+      - sourceLabels: [image]
+        action: replace
+        regex: '[^/]+\.dkr\.ecr\.[^/]+\.amazonaws\.com/(.+)'
+        targetLabel: image
+        replacement: '$1'
+
+kube-state-metrics:
+  prometheus:
+    monitor:
+      # REVIEW4 C1: kube_pod_container_info and kube_pod_init_container_info carry the full image reference three times.
+      metricRelabelings:
+        - sourceLabels: [image]
+          action: replace
+          regex: '[^/]+\.dkr\.ecr\.[^/]+\.amazonaws\.com/(.+)'
+          targetLabel: image
+          replacement: '$1'
+        - sourceLabels: [image_spec]
+          action: replace
+          regex: '[^/]+\.dkr\.ecr\.[^/]+\.amazonaws\.com/(.+)'
+          targetLabel: image_spec
+          replacement: '$1'
+        - sourceLabels: [image_id]
+          action: replace
+          regex: '[^/]+\.dkr\.ecr\.[^/]+\.amazonaws\.com/(.+)'
+          targetLabel: image_id
+          replacement: '$1'
+  image:
+    registry: ${ECR_REGISTRY}
+    repository: ${PATH_KUBE_STATE_METRICS}
+    tag: ${TAG_KUBE_STATE_METRICS}
+    sha: ${DIGEST_KUBE_STATE_METRICS} # this subchart appends the sha verbatim after "@", so it wants the sha256: prefix
+  tolerations:
+    - key: "workload"
+      operator: "Exists"
+      effect: "NoSchedule"
+  nodeSelector:
+    workload: monitoring
+
+nodeExporter:
+  enabled: true
+prometheus-node-exporter:
+  image:
+    registry: ${ECR_REGISTRY}
+    repository: ${PATH_NODE_EXPORTER}
+    tag: ${TAG_NODE_EXPORTER}
+    digest: ${DIGEST_NODE_EXPORTER}
+  tolerations:
+    - operator: "Exists" # every node, whatever its taint
+
+prometheus:
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+  prometheusSpec:
+    image:
+      registry: ${ECR_REGISTRY}
+      repository: ${PATH_PROMETHEUS}
+      tag: ${TAG_PROMETHEUS}
+      sha: ${SHA_PROMETHEUS}
+    tolerations:
+      - key: "workload"
+        operator: "Exists"
+        effect: "NoSchedule"
+    nodeSelector:
+      workload: monitoring
+    priorityClassName: monitoring-critical
+    retention: 30d
+    retentionSize: 85GB # never let the TSDB fill the 100 Gi volume
+    scrapeInterval: 10s
+    scrapeTimeout: 8s
+    evaluationInterval: 10s
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: gp3
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 100Gi
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    additionalScrapeConfigs:
+      # Kafka brokers. Strimzi serves the JMX exporter on 9404.
+      # `instance` and `pod` are the pod NAME. A Strimzi broker pod keeps its name across a restart, so the series
+      # continues and counters visibly reset. With the R1 default (`instance` = podIP:9404) a restart made a new series.
+      - job_name: kafka-brokers
+        scrape_interval: 10s
+        scrape_timeout: 8s
+        metrics_path: /metrics
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names: [streaming]
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_strimzi_io_component_type]
+            regex: kafka
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_label_strimzi_io_pool_name]
+            regex: brokers
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_phase]
+            regex: Running
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: instance
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: kafka_broker
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+          - source_labels: [__meta_kubernetes_pod_node_name]
+            target_label: node
+          - source_labels: [__meta_kubernetes_pod_ip]
+            regex: (.+)
+            replacement: "$1:9404"
+            target_label: __address__
+      # Flink JobManager and TaskManagers (reporter port 9249). Same rule: the pod name, not the IP.
+      # A replacement TaskManager gets a new name (streaming-flink-taskmanager-1-N). Roles are told apart by `flink_component`.
+      - job_name: flink-metrics
+        scrape_interval: 10s
+        scrape_timeout: 8s
+        metrics_path: /
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names: [streaming]
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            regex: streaming-flink
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_phase]
+            regex: Running
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_label_component]
+            target_label: flink_component
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: instance
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+          - source_labels: [__meta_kubernetes_pod_node_name]
+            target_label: node
+          - source_labels: [__meta_kubernetes_pod_ip]
+            regex: (.+)
+            replacement: "$1:9249"
+            target_label: __address__
+      # Load generator: target rate, actual rate, start time, seed (images/load-generator/loadgen_entry.py), port 9102.
+      - job_name: load-generator
+        scrape_interval: 10s
+        scrape_timeout: 8s
+        metrics_path: /metrics
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names: [streaming]
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            regex: load-generator
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_phase]
+            regex: Running
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: instance
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+          - source_labels: [__meta_kubernetes_pod_ip]
+            regex: (.+)
+            replacement: "$1:9102"
+            target_label: __address__
+      # Verification consumer (protocol 2.3): malformed record counts on raw-events, port 9103.
+      - job_name: verification-consumer
+        scrape_interval: 10s
+        scrape_timeout: 8s
+        metrics_path: /metrics
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names: [streaming]
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            regex: verification-consumer
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_phase]
+            regex: Running
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: instance
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+          - source_labels: [__meta_kubernetes_pod_ip]
+            regex: (.+)
+            replacement: "$1:9103"
+            target_label: __address__
