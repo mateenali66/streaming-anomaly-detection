@@ -9,13 +9,23 @@ Phases
            random forest at 50, per fold, both workloads. Trial counts come from training/config.json.
   window   Window-size sensitivity on campaign 1 (6.1.5): the 8 semi-supervised models at 30 trials per fold, at
            15, 60 and 120 s on both workloads and 300 s on IoT.
+After the freeze tag (6.1.2), with --frozen-dir holding ecommerce.json, iot.json and FREEZE.json:
+  frozen   The 9 models with the frozen configuration and no search, every fold of all six campaigns: the 360 fits
+           of campaigns 2 and 3 (6.1.3) and the 180-fit refit of campaign 1 (6.1.4).
+  category RQ3: Isolation Forest, frozen, on each of the four categories alone and with each left out, every fold of
+           all six campaigns, 480 fits (6.3).
+  cross    The 54 cross-workload fits of training/cross_train.py, 9 models x 6 source campaigns (4.3.2), with the
+           shared feature list given by --shared.
 
-Each job writes to <out>/<campaign>/w<size>/<model>/fold<k>/, so no two processes share a results file or an Optuna
-database. A job whose summary and score file exist is skipped, and Optuna resumes a partial study from its database,
-so a rerun after an interruption continues where it stopped.
+Each job writes to its own folder (<out>/<campaign>/w<size>/<model>/fold<k>/, <out>/<campaign>/w30-frozen/<name>/
+fold<k>/ or <out>/cross/<campaign>/<model>/), so no two processes share a results file or an Optuna database. A job
+whose output files exist is skipped, and Optuna resumes a partial study from its database, so a rerun after an
+interruption continues where it stopped.
 
     python3 training/run_matrix.py --derived /opt/sad/derived --out /opt/sad/results --phases search window \
         --gpus 4 --per-gpu 5 --cpu-slots 12 [--s3-uri s3://bucket/training/runs/<run>] [--sns-topic arn]
+    python3 training/run_matrix.py --derived /data --out /results --phases frozen category cross \
+        --frozen-dir /frozen --shared /data/shared_30s.json --gpus 4 --per-gpu 4 --cpu-slots 12
 """
 from __future__ import annotations
 
@@ -33,12 +43,16 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 TRAIN = HERE / "train.py"
+CROSS = HERE / "cross_train.py"
 SEMI = ["Trans_AE", "CNN_AE", "DeepSVDD", "DAGMM", "LSTM_AE", "LSTM_VAE", "OC_SVM", "IF"]
 GPU_MODELS = {"LSTM_AE", "Trans_AE", "CNN_AE", "LSTM_VAE", "DeepSVDD", "DAGMM"}
 # Relative cost per trial, measured on 17 Oct 2026 (CAMPAIGN_LOG). Only used to start the longest jobs first.
 COST = {"Trans_AE": 13.0, "CNN_AE": 6.4, "DeepSVDD": 5.5, "DAGMM": 4.0, "OC_SVM": 3.9, "LSTM_AE": 3.8,
         "LSTM_VAE": 2.7, "IF": 0.3, "RF": 0.3}
 WINDOW_SIZES = {"ecommerce": [15, 60, 120], "iot": [15, 60, 120, 300]}
+CATEGORIES = ["broker", "consumer", "flink", "jvm"]
+FROZEN_PHASES = ("frozen", "category", "cross")
+N_CAMPAIGNS = 6
 
 
 @dataclass(order=True)
@@ -49,6 +63,7 @@ class Job:
     cmd: list = field(compare=False)
     out: Path = field(compare=False)
     gpu: bool = field(compare=False)
+    done_files: list = field(default_factory=list, compare=False)
     attempts: int = field(default=0, compare=False)
 
 
@@ -60,10 +75,69 @@ def is_done(out: Path, model: str, fold: int) -> bool:
     return (out / f"summary_{model}.json").is_file() and (out / "scores" / f"{model}_fold{fold}.parquet").is_file()
 
 
+def files_done(files: list) -> bool:
+    return bool(files) and all(Path(f).is_file() for f in files)
+
+
+def frozen_jobs(args, cdirs: list[Path]) -> list[Job]:
+    """Phases frozen, category and cross. Every job reads the frozen configuration and passes the freeze marker."""
+    if not args.frozen_dir:
+        raise SystemExit("phases frozen, category and cross need --frozen-dir, the folder freeze.py writes")
+    fz = Path(args.frozen_dir)
+    marker = fz / "FREEZE.json"
+    if not marker.is_file() or marker.stat().st_size == 0:
+        raise SystemExit(f"{marker} is missing: these phases run only after the freeze tag (6.1.2)")
+    if len(cdirs) != N_CAMPAIGNS:
+        raise SystemExit(f"these phases need all {N_CAMPAIGNS} campaigns under {args.derived}, found "
+                         f"{[c.name for c in cdirs]}")
+    py, jobs = sys.executable, []
+    for cdir in cdirs:
+        cid = cdir.name
+        params = fz / f"{workload_of(cid)}.json"
+        windows = cdir / "windows_30s.parquet"
+        if not params.is_file() or not windows.is_file():
+            raise SystemExit(f"missing {params if not params.is_file() else windows}")
+        base = [py, "-u", str(TRAIN), "--windows", str(windows), "--folds", str(cdir / "folds.parquet"),
+                "--frozen-params", str(params), "--freeze-marker", str(marker)]
+        plan = []
+        if "frozen" in args.phases:
+            plan += [(m, m, [], "") for m in SEMI + ["RF"]]
+        if "category" in args.phases:
+            for c in CATEGORIES:
+                plan += [("IF", f"IF_{c}", ["--category", c], f"_{c}"),
+                         ("IF", f"IF_no_{c}", ["--exclude-category", c], f"_no_{c}")]
+        for model, name, extra, suffix in plan:
+            for fold in range(1, 11):
+                out = Path(args.out) / cid / "w30-frozen" / name / f"fold{fold}"
+                done = [out / f"summary_{model}.json", out / "scores" / f"{model}{suffix}_fold{fold}.parquet"]
+                if files_done(done):
+                    continue
+                cmd = base + ["--model", model, "--fold", str(fold), "--output", str(out)] + extra
+                prio = 2e6 - COST[model]
+                jobs.append(Job(prio, f"{cid}/w30-frozen/{name}/fold{fold}", model, cmd, out, model in GPU_MODELS, done))
+        if "cross" in args.phases:
+            if not args.shared or not Path(args.shared).is_file():
+                raise SystemExit("phase cross needs --shared, the file cross_train.py --write-shared makes")
+            for model in SEMI + ["RF"]:
+                out = Path(args.out) / "cross" / cid / model
+                done = [out / "summary.json", out / "auc.csv"]
+                if files_done(done):
+                    continue
+                cmd = [py, "-u", str(CROSS), "--derived", str(args.derived), "--source", cid, "--model", model,
+                       "--frozen-params", str(params), "--freeze-marker", str(marker), "--shared", str(args.shared),
+                       "--output", str(out)]
+                jobs.append(Job(2e6 - 3 * COST[model], f"cross/{cid}/{model}", model, cmd, out, model in GPU_MODELS,
+                                done))
+    return jobs
+
+
 def build_jobs(args) -> list[Job]:
     jobs = []
     py = sys.executable
-    for cdir in sorted(Path(args.derived).iterdir()):
+    cdirs = sorted(p for p in Path(args.derived).iterdir() if p.is_dir())
+    if any(ph in args.phases for ph in FROZEN_PHASES):
+        jobs += frozen_jobs(args, cdirs)
+    for cdir in cdirs:
         cid = cdir.name
         if not cid.endswith("-a"):  # campaign 1 only; replicates wait for the freeze (6.1.3)
             continue
@@ -87,7 +161,8 @@ def build_jobs(args) -> list[Job]:
                 trials = n_trials or (50 if model == "RF" else 100)
                 # search before window, then longest first; heapq pops the smallest priority
                 prio = (0 if n_trials is None else 1e6) - COST[model] * trials * (2.0 if w == 15 else 30.0 / w)
-                jobs.append(Job(prio, f"{cid}/w{w}/{model}/fold{fold}", model, cmd, out, model in GPU_MODELS))
+                done = [out / f"summary_{model}.json", out / "scores" / f"{model}_fold{fold}.parquet"]
+                jobs.append(Job(prio, f"{cid}/w{w}/{model}/fold{fold}", model, cmd, out, model in GPU_MODELS, done))
     return jobs
 
 
@@ -146,8 +221,7 @@ class Runner:
         with self.lock:
             self.running.pop(job.name, None)
             self.free_slot(job, slot)
-            fold = int(job.name.rsplit("fold", 1)[1])
-            if rc == 0 and is_done(job.out, job.model, fold):
+            if rc == 0 and files_done(job.done_files):
                 self.done.append(rec)
             elif job.attempts + 1 < 2:
                 job.attempts += 1
@@ -228,7 +302,9 @@ def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--derived", required=True)
     p.add_argument("--out", required=True)
-    p.add_argument("--phases", nargs="+", choices=["search", "window"], default=["search"])
+    p.add_argument("--phases", nargs="+", choices=["search", "window", *FROZEN_PHASES], default=["search"])
+    p.add_argument("--frozen-dir", default=None, help="folder with ecommerce.json, iot.json and FREEZE.json")
+    p.add_argument("--shared", default=None, help="shared feature list for phase cross (cross_train.py --write-shared)")
     p.add_argument("--gpus", type=int, default=4)
     p.add_argument("--per-gpu", type=int, default=4)
     p.add_argument("--cpu-slots", type=int, default=8)
