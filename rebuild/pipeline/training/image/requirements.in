@@ -1,0 +1,17 @@
+# Top-level pins of the training environment, the same versions as the local pipeline (pipeline/README.md) and the
+# first training run's venv. requirements.lock holds the full closure with hashes. torch 2.12.1 on PyPI is the CUDA 13.0 build.
+numpy==2.4.6
+pandas==2.3.3
+pyarrow==24.0.0
+scipy==1.17.1
+scikit-learn==1.9.0
+optuna==5.0.0
+torch==2.12.1
+SQLAlchemy==2.0.51
+alembic==1.18.4
+joblib==1.5.3
+threadpoolctl==3.6.0
+colorlog==6.12.0
+tqdm==4.68.3
+PyYAML==6.0.3
+pytest==9.1.1
