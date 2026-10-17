@@ -1,0 +1,6 @@
+# Copy to terraform.tfvars (gitignored). Never commit real values.
+account_id   = "000000000000"
+owner        = "your-team-alias"
+state_bucket = "REPLACE-state-bucket"
+# instance_type = "g5.12xlarge"
+# cap_hours     = 16

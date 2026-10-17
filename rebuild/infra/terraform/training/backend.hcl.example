@@ -1,0 +1,6 @@
+# Copy to backend.hcl (gitignored). Credentials come from the environment (export AWS_PROFILE=...).
+bucket       = "REPLACE-state-bucket"
+key          = "training/terraform.tfstate"
+region       = "us-east-2"
+encrypt      = true
+use_lockfile = true
