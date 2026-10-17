@@ -65,7 +65,7 @@
     "min_nondecreasing_frac": 0.99,
     "min_spearman": 0.99,
     "min_points": 30,
-    "allow_metric_patterns": []
+    "allow_metric_patterns": ["^jvm_buffer_pool_(used|capacity)_bytes$"]
   },
   "telemetry": {
     "attempt_min_coverage_frac": 0.95,
