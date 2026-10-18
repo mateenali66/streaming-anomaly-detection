@@ -1,0 +1,14 @@
+# Analysis environment (protocol 7.3.1, 7.3.5). The first block holds the training lock's versions of every package the
+# analysis imports, directly or through training/train.py, so scores are read and thresholds computed with the same
+# code and versions that wrote them. torch is left out: train.py imports it only if present, and no analysis step
+# trains a model. The second block is what only the analysis needs.
+numpy==2.4.6
+pandas==2.3.3
+pyarrow==24.0.0
+scipy==1.17.1
+scikit-learn==1.9.0
+optuna==5.0.0
+pyyaml==6.0.3
+pytest==9.1.1
+matplotlib
+statsmodels

@@ -53,3 +53,38 @@ In run c1-20261017T2111Z all 60 of these jobs (six models, ten folds) ran their 
 Decision 35 foresaw part of this. It notes that the pre-fault holds 2 windows at 300 s, so the sequence models cannot score the full within-run set there. It did not foresee that they cannot score any window at all. The window analysis reports the six sequence models at 300 s on IoT as not estimable, with these counts, and compares only Isolation Forest and OC-SVM at that size.
 
 Those two models scored all ten folds at 300 s, but each test block holds only 2 or 3 ANOMALOUS windows among 26 to 28. Their fold AUCs range from 0.93 to 1.00 for Isolation Forest and from 0.06 to 0.89 for OC-SVM, so the paper reports this point as low-powered. The paper reports D3 in its deviations appendix and in the response to the reviewers.
+
+## D4. Analysis code added after registration, and the choices it makes (18 October 2026)
+
+The registered protocol defines the metrics (section 4.5), the statistics (section 5) and the hypotheses (section 5.8), and names `make metrics` and `make stats` (section 7.1), but the registered code holds no program for them. The code in `pipeline/analysis` was written on 18 October 2026, after both training runs had finished. It reads stored scores only and trains nothing. It was committed and tagged before any contrast of C1 to C6 was computed on campaigns 2 and 3. Three things about campaigns 2 and 3 had been seen before that commit. They are the ranges of the fold AUCs over all phase B fits when the run was checked (campaign log, 18 October 05:15), the max-z AUC of one ec-b fold in a smoke test, and the first two rows of one cross-workload AUC file (Isolation Forest trained on ec-b and scored on ec-a). The author accepted the choices below on 18 October 2026.
+
+1. The references that need no training (sections 4.4 and 6.3) come from `analysis/baselines.py`, which uses the fold data of `train.py` unchanged.
+   1. Max-z is the RuleBased model of `train.py`. On ec-b fold 1 it gives exactly the scores of `train.py --model RuleBased`.
+   2. EWMA is `score_ewma` of `classical_baselines.py` at the registered commit, with its code unchanged. It gets the same per-fold features as max-z and every panel model, with selection, imputation and scaling fitted on the fold's training NORMAL windows. R1 gave it every column, with gaps set to 0 and its own scaler. The author chose the panel's features so that C2a and C2b differ only in the score function.
+   3. The C2b comparator moves only the centre, to the training NORMAL mean (`ewma_mechanism.py`, variant `centre_train_mean`).
+   4. Time-only is the window's start time. Phase position is the seconds since the start of the attempt's PRE_FAULT segment, so it has no value on TRAILING windows.
+2. Metrics (section 4.5) come from `analysis/metrics.py`. Labels, roles and within-run tags come from the preprocessing outputs, and every score file is checked against them.
+   1. Thresholds follow `train.py`. A fixed budget b is the (1 minus b) quantile of the cal block's NORMAL scores as numpy computes it, the F1-optimal threshold is `find_optimal_threshold`, and a window is in alert at or above the threshold.
+   2. PR-AUC is average precision. The R1 placebo is the mean over the block's seven fault runs.
+   3. An alert onset is an alerted window whose predecessor in the same contiguous stretch is not in alert or has no score. False alerts per hour are the onsets on negative windows divided by the negative windows' time.
+   4. Latency uses the convention of `train.py`. It is the index of the first alerted window of the labelled span times 30 s, censored at the span's length, at both fixed budgets. Kaplan-Meier summaries pool a campaign's 70 fault runs and also run per fault, restricted at the longest labelled span in the group.
+3. Statistics (section 5) come from `analysis/stats.py`.
+   1. The exact Wilcoxon p enumerates all 1,024 sign vectors, with zero differences dropped and tied magnitudes at mid-ranks.
+   2. The BCa interval uses 10,000 resamples of the test blocks with seed 20261018.
+   3. With ten folds in every campaign, REML has the closed form of the one-way estimator truncated at zero. A test checks it against statsmodels.
+   4. Sign flips are exact over all 2^20 vectors for two campaigns and 1,000,000 random vectors with seed 20261018 for three.
+   5. Superior means a lower 95% bound above 0 and a Holm-adjusted p below 0.05. A two-sided contrast (C2a, C3 and C4) can also end inferior. Replication (section 5.5) is judged for the outcome the pooled estimate reaches.
+4. The Holm family of each workload (section 5.7.1) has seven members, C1, C2a, C2b, C3, C4, C5 and C6. The text counts six hypotheses, and the author chose to include C2b so that every confirmatory superiority claim is adjusted. Each member enters with the p of its superiority test.
+   1. For C1, a deep model's p is the larger of its two metric p-values, or 1 unless both estimates are above 0. C1 enters with the smallest of these after Holm over the six models.
+   2. For C2a, the p is the larger of its two metric p-values, or 1 if their signs differ.
+   3. C2b, C3 and C4 enter with their pooled p. C5 enters with its permutation p, in both families.
+   4. For C6, each panel model's p is its pooled p, or 1 unless its estimate is above 0. C6 enters with the smallest of these after Holm over the eight models.
+   5. Non-superiority and equivalence are intersection-union tests at 0.05 with no adjustment (section 5.7, items 2 and 3).
+5. The hypotheses come from `analysis/confirm.py`.
+   1. C3 compares pooled AUC on the test windows that all eight panel models score in the fold, because a sequence model does not score the first windows of each stretch. Within-run AUC needs no matching, because every model scores the same within-run negatives and every ANOMALOUS window.
+   2. C4 learns the fusion weights as `rq3_fusion_corrected.py` does, with a logistic regression on the four category scores of the other nine folds' test windows, balanced classes and seed 42.
+   3. C5 and C7 use eleven detectors, the eight panel models, the random forest, max-z and EWMA. The C5 p is one-sided, the share of the 5,040 orderings whose median rho is at least the observed one.
+   4. C6 follows D2, item 3.6. Pooled AUC is computed from the score files, and every value is checked against the fit's `auc.csv`.
+6. The analysis environment is `analysis/requirements.lock`, with hashes. Every package it shares with the training lock has the training lock's version, and it adds matplotlib and statsmodels. `analysis/baselines.py` imports `train.py` and runs in the training environment. The other analysis steps need no PyTorch. `analysis/metrics.py` holds copies of two functions of `train.py`, and a test checks they are identical.
+
+The paper reports D4 in its deviations appendix.
