@@ -138,6 +138,31 @@ def fig_latency(runs, dest, inputs, budget="fpb_0.01"):
     save(fig, dest / "fig_latency.pdf", inputs)
 
 
+def fig_protocol(dest):
+    """The run protocol of 1.3 as a timeline, drawn from its registered lengths (no data). Widths are schematic for
+    the short segments."""
+    segs = [("Settle\n0-300 s", 150, "0.88", None), ("Pre-fault\n600 s", 600, "#9ecae1", "NORMAL"),
+            ("Apply", 70, "0.88", None), ("Injection\n180 or 300 s", 300, "#fc9272", "ANOMALOUS\n(sham: SHAM)"),
+            ("Recovery\n300 s", 300, "#fdd0a2", "RECOVERY\n(sham: SHAM_POST)"), ("Cooldown\n300 s", 300, "0.88", None),
+            ("Recovery\ngate", 170, "0.88", None)]
+    fig, ax = plt.subplots(figsize=(7.0, 1.5))
+    x = 0
+    for name, w, color, lab in segs:
+        ax.add_patch(plt.Rectangle((x, 0), w, 1, facecolor=color, edgecolor="0.3", lw=0.6))
+        ax.text(x + w / 2, 0.5, name, ha="center", va="center", fontsize=6.5)
+        if lab:
+            ax.text(x + w / 2, -0.3, lab, ha="center", va="center", fontsize=6, color="0.2")
+        x += w
+    ax.plot([450, 750], [1.1, 1.1], color="0.15", lw=1.4)
+    ax.text(600, 1.27, "last 10 windows: within-run negatives", fontsize=6, ha="center")
+    ax.text(x, -0.72, "Grey segments are excluded from every fit and every metric.", fontsize=6, ha="right", color="0.3")
+    ax.set_xlim(0, x)
+    ax.set_ylim(-0.85, 1.45)
+    ax.axis("off")
+    fig.savefig(dest / "fig_protocol.pdf", bbox_inches="tight", metadata={"Creator": "analysis/figures.py"})
+    plt.close(fig)
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     p.add_argument("--out", required=True)
@@ -153,6 +178,7 @@ def main(argv=None):
     fig_c6(res, dest, h("confirm.json"))
     fig_c7(res, dest, h("confirm.json"))
     fig_latency(runs, dest, h("run_metrics.parquet"))
+    fig_protocol(dest)
     print(f"figures: {len(list(dest.glob('*.pdf')))} files in {dest}")
 
 

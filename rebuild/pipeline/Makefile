@@ -13,7 +13,7 @@ ARGS = --campaign-dir $(CAMPAIGN) --out $(OUT) \
 	$(if $(FREEZE),--freeze-marker $(FREEZE)) $(if $(CONFIG),--config $(CONFIG)) \
 	$(if $(CHECK),--check-against $(CHECK))
 
-.PHONY: build labels features folds validate synth test baselines metrics stats posthoc describe numbers tables figures check from-scores verify-inputs gate ewma-mechanism classical build-c1 build-replicates train freeze train-frozen all explore cost
+.PHONY: build labels features folds validate synth test baselines metrics stats posthoc describe numbers tables figures check from-scores verify-inputs gate ewma-mechanism classical ewma-r1-inputs posthoc-review build-c1 build-replicates train freeze train-frozen all explore cost facts paper-sync
 
 build:
 	$(PY) -m streamprep build $(ARGS) --stage all
@@ -77,7 +77,8 @@ numbers:
 
 tables:
 	$(APY) -m analysis.tables --out $(RESULTS) --dest $(RESULTS)/tables
-	if [ -d $(RESULTS)/explore ]; then $(APY) -m analysis.tables_explore --out $(RESULTS) --dest $(RESULTS)/tables; fi
+	if [ -d $(RESULTS)/explore ]; then $(APY) -m analysis.tables_explore --out $(RESULTS) --dest $(RESULTS)/tables \
+		--frozen ../frozen; fi
 
 figures:
 	$(APY) -m analysis.figures --out $(RESULTS) --dest $(RESULTS)/figures
@@ -122,6 +123,16 @@ classical:
 		|| exit 1; done
 	$(APY) -m analysis.classical summarize --derived $(DERIVED) --extra $(EXTRA) --results $(RESULTS) --out $(RESULTS)/classical
 
+# Sensitivity checks added after the internal review of 18 October (D6, item 10): EWMA on the earlier manuscript's
+# inputs (training environment), then the post hoc checks, which read the stored scores and the explore outputs.
+ewma-r1-inputs:
+	for c in $(CAMPAIGNS); do $(PY) -m analysis.ewma_r1_inputs --derived $(DERIVED) --campaign $$c --out $(EXTRA) \
+		$(if $(FREEZE),--freeze-marker $(FREEZE)) || exit 1; done
+
+posthoc-review:
+	$(APY) -m analysis.posthoc_review --derived $(DERIVED) --phase-b $(PHASE_B) --baselines $(BASELINES) --extra $(EXTRA) \
+		--results $(RESULTS) --drift
+
 # Training (7.1 step 6) runs in the training image on a GPU machine: the campaign-1 search and window jobs, then the
 # freeze, then the frozen, category and cross-workload fits (6.3). make all = verify-inputs, the builds, these, and
 # from-scores. The freeze writes ../frozen, which the author commits and tags before train-frozen reads campaigns 2
@@ -149,7 +160,7 @@ train-frozen:
 	training/image/run_in_image.sh run --image $(IMAGE) --code $(CODE) --derived $(DERIVED) --out $(FROZEN_RUN) \
 		-- --phases frozen category cross --frozen-dir /code/rebuild/frozen --shared /data/shared_30s.json
 
-all: verify-inputs build-c1 train freeze build-replicates train-frozen baselines metrics stats posthoc describe gate ewma-mechanism classical explore cost numbers tables figures check
+all: verify-inputs build-c1 train freeze build-replicates train-frozen baselines metrics stats posthoc describe gate ewma-mechanism classical ewma-r1-inputs explore posthoc-review cost facts numbers tables figures check
 
 # Exploratory analyses of 5.9 from the stored scores (D6), and the cost measurement of 5.9.18 (a GPU-free fit per
 # model on one machine, in the training environment).
@@ -159,3 +170,16 @@ explore:
 
 cost:
 	$(PY) -m analysis.cost --derived $(DERIVED) --frozen-dir ../frozen --out $(RESULTS)/cost --phase-b $(PHASE_B)
+
+# Facts the manuscript quotes (build sizes, training job counts, frozen settings), and the copy of numbers.tex, the
+# tables and the figures into the manuscript folder (PAPER, for example ../../array/r2).
+PAPER ?=
+facts:
+	$(APY) -m analysis.facts --derived $(DERIVED) --search-run $(TRAIN_RUN) --phase-b $(PHASE_B) --frozen ../frozen \
+		--out $(RESULTS)
+
+paper-sync:
+	mkdir -p $(PAPER)/tables $(PAPER)/figures
+	cp $(RESULTS)/numbers.tex $(RESULTS)/claims.json $(PAPER)/
+	cp $(RESULTS)/tables/*.tex $(PAPER)/tables/
+	cp $(RESULTS)/figures/*.pdf $(PAPER)/figures/

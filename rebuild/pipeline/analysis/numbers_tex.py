@@ -55,6 +55,10 @@ def tex_num(s: str) -> str:
     return s
 
 
+OPS = {"min": min, "max": max, "sum": sum, "mean": lambda x: sum(x) / len(x),
+       "maxabsdiff": lambda x: max(abs(x[i] - x[i + 1]) for i in range(0, len(x), 2))}
+
+
 class Book:
     def __init__(self):
         self.vals, self.claims = {}, {}
@@ -64,6 +68,21 @@ class Book:
             raise SystemExit(f"ERROR: number key {key} defined twice")
         self.vals[key] = text
         self.claims[key] = {"text": text, "value": value, "source": source, "field": field, "script": script}
+
+    def derive(self, key, op, keys, fmt=None):
+        """A number computed from other keys: op is min, max, sum or mean. check.py recomputes it from the claims
+        of those keys, which are themselves re-read from their sources."""
+        vals = [self.claims[k]["value"] for k in keys]
+        if any(v is None for v in vals):
+            raise SystemExit(f"ERROR: {key} derives from a key with no value")
+        v = OPS[op](vals)
+        if fmt is None and "per_h" in keys[0]:
+            fmt = lambda x: f"{x:.2f}"
+        if fmt is None:
+            src = self.vals[keys[0]]
+            fmt = (lambda x: tex_num(s3(x))) if ("+" in src or "ensuremath" in src) else \
+                  (lambda x: f"{x:,}") if isinstance(v, int) else (lambda x: f3(x))
+        self.add(key, fmt(v), v, "derived", f"{op}:" + "|".join(keys), "analysis/numbers_tex.py")
 
     def est(self, key, est, source, field, script):
         """An estimate dict with mean and ci95: key.est, key.lo, key.hi, key.p."""
@@ -166,7 +185,7 @@ def describe_numbers(b: Book, out: Path):
     oper = pd.read_parquet(out / "describe" / "operating.parquet")
     for r in oper.itertuples():
         k = f"oper.{WL[r.workload]}.{r.detector}.{r.metric.replace('_fpb_', '.b')}"
-        b.add(f"{k}.pooled", f3(r.pooled_mean), r.pooled_mean, src,
+        b.add(f"{k}.pooled", f"{r.pooled_mean:.2f}" if "per_h" in r.metric else f3(r.pooled_mean), r.pooled_mean, src,
               f"workload={r.workload},detector={r.detector},metric={r.metric}.pooled", sc)
     src = "describe/latency.parquet"
     lat = pd.read_parquet(out / "describe" / "latency.parquet")
@@ -212,12 +231,29 @@ TABLES = [
     ("ewma_mechanism/magnitude_faults_contrast.csv", "magf", ["workload", "detector"], ["d_mean", "d_lo", "d_hi", "p"]),
     ("ewma_mechanism/argmax_category.csv", "argmax", ["workload", "operating_point", "kind", "category"],
      ["share", "feature_share"]),
+    ("posthoc_review/matched_c1.csv", "phm", ["workload", "detector"], ["est", "lo", "hi"]),
+    ("posthoc_review/carryover.csv", "phc", ["workload", "detector"],
+     ["within_run_auc_all", "within_run_auc_without", "r1_placebo_all", "r1_placebo_all_lo", "r1_placebo_all_hi",
+      "r1_placebo_without", "c1_without_est", "c1_without_lo", "c1_without_hi"]),
+    ("posthoc_review/without_f8.csv", "phf8", ["workload", "detector"],
+     ["auc_all", "auc_without_f8", "f8_vs_normal", "f8_share_of_pos", "c1_est", "c1_lo", "c1_hi"]),
+    ("posthoc_review/magnitude_without_tm_loss.csv", "phmag", ["workload", "detector"], ["d_mean", "d_lo", "d_hi"]),
+    ("posthoc_review/normal_fpr.csv", "phfpr", ["workload", "detector", "budget", "set"], ["fpr"]),
+    ("posthoc_review/false_alert_share.csv", "phfas", ["workload", "detector", "budget"], ["recovery_share"]),
+    ("posthoc_review/ewma_r1_inputs.csv", "phewma", ["workload", "reference", "metric"], ["est", "lo", "hi", "c1"]),
+    ("posthoc_review/drift_blocked.csv", "phdrift", ["campaign_id", "test"], ["cv_auc_blocked"]),
+    ("posthoc_review/c5_power.csv", "phc5", ["test"], ["critical_median_rho"]),
+    ("gate/sham_false_passes.csv", "sfp", ["campaign_id", "signature"], ["sham_attempts", "false_passes"]),
+    ("gate/cross_signatures.csv", "xsig", ["campaign_id", "run_type", "signature"], ["passes", "attempts"]),
+    ("cost/ec2_phase_b_train_time.csv", "ec2", ["workload", "model"], ["median_s"]),
     ("classical/classical_summary.csv", "classical", ["workload", "detector"],
      ["d_pooled_auc_vs_RuleBased", "d_pooled_auc_vs_RuleBased_lo", "d_pooled_auc_vs_RuleBased_hi",
       "d_within_run_auc_vs_RuleBased"]),
 ]
 INTS = {"labelled_runs", "attempts", "repeats", "VALID", "flag_F7_TM_LOSS", "n_attempts", "n", "windows_total",
-        "attempt_eval_windows"}
+        "attempt_eval_windows", "sham_attempts", "false_passes", "passes"}
+SIGNED_PREFIX = {"phm", "phmag", "phewma"}          # their est, lo, hi and c1 are differences
+SIGNED_COLS = {"est", "lo", "hi", "c1", "c1_est", "c1_lo", "c1_hi", "c1_without_est", "c1_without_lo", "c1_without_hi"}
 
 
 def fmt_cell(col: str, v) -> str:
@@ -234,7 +270,7 @@ def fmt_cell(col: str, v) -> str:
     if col == "fit_s" or col.endswith("_ms_per_window") or col.endswith("_p50"):
         x = float(v)
         return f"{x:.3g}" if x < 100 else f"{x:.0f}"
-    if col.startswith("share") or col.startswith("frac") or col == "feature_share":
+    if col.startswith("share") or col.startswith("frac") or col.endswith("_share") or "share_of" in col:
         return f"{100 * float(v):.0f}\\%"
     if col in ("H",):
         return f"{float(v):.2f}"
@@ -255,10 +291,203 @@ def table_numbers(b: Book, out: Path):
                     raise SystemExit(f"ERROR: {src} has no column {col}")
                 v = r[col]
                 val = None if pd.isna(v) else (v.item() if hasattr(v, "item") else v)
-                b.add(".".join([prefix, *idv, col]), fmt_cell(col, val), val, src, f"{cond}.{col}",
+                if val is None and col not in df.columns:
+                    continue
+                signed = (col in SIGNED_COLS and (prefix in SIGNED_PREFIX or col.startswith("c1"))
+                          and str(r.get("reference", "")) != "absolute")
+                if signed and val is not None:
+                    b.add(".".join([prefix, *idv, col]), tex_num(s3(float(val))), val, src, f"{cond}.{col}",
+                          "analysis/posthoc_review.py")
+                    continue
+                text = (f"{val:.2f}" if (val is not None and "metric" in ids and "per_h" in str(r["metric"]))
+                        else fmt_cell(col, val))
+                b.add(".".join([prefix, *idv, col]), text, val, src, f"{cond}.{col}",
                       "analysis/" + src.split("/")[0].replace("explore", "explore.py").replace("gate", "gate_summary.py")
                       .replace("cost", "cost.py").replace("ewma_mechanism", "ewma_mechanism.py")
                       .replace("classical", "classical.py"))
+
+
+def facts_numbers(b: Book, facts: dict):
+    """facts.json flattened: facts.<path>, integers with thousands separators, hours to one decimal."""
+    def walk(obj, path):
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                walk(v, path + [str(k)])
+            return
+        key = ".".join(["facts", *[WL.get(x, x) for x in path]])
+        if isinstance(obj, bool) or obj is None:
+            return
+        text = f"{obj:,}" if isinstance(obj, int) else (f"{obj:.1f}" if path[-1].endswith("hours") else f3(obj))
+        b.add(key, text, obj, "facts.json", ".".join(path), "analysis/facts.py")
+    walk(facts, [])
+
+
+AE = ["LSTM_AE", "Trans_AE", "CNN_AE", "LSTM_VAE"]
+DETS = PANEL + ["RF", "RuleBased", "EWMA"]
+
+
+def derived_numbers(b: Book):
+    """Ranges and totals the manuscript quotes, each recomputed by check.py from the keys it names."""
+    have = lambda k: k in b.vals
+    for w in ("ec", "iot"):
+        b.derive(f"rng.C1.{w}.pooled.min", "min", [f"C1.{w}.{m}.pooled_auc.est" for m in DEEP])
+        b.derive(f"rng.C1.{w}.pooled.max", "max", [f"C1.{w}.{m}.pooled_auc.est" for m in DEEP])
+        b.derive(f"rng.C1.{w}.wrpc.lo.min", "min", [f"C1.{w}.{m}.within_run_pc.lo" for m in DEEP])
+        b.derive(f"rng.C1.{w}.wrpc.hi.max", "max", [f"C1.{w}.{m}.within_run_pc.hi" for m in DEEP])
+        b.derive(f"rng.PH.C1.{w}.AE.min", "min", [f"PH.C1.{w}.{m}.est" for m in AE])
+        b.derive(f"rng.PH.C1.{w}.AE.max", "max", [f"PH.C1.{w}.{m}.est" for m in AE])
+        for grp, members in (("AE", AE), ("point", ["IF", "OC_SVM", "RuleBased"]), ("svdddagmm", ["DeepSVDD", "DAGMM"]),
+                             ("panel", PANEL), ("dets", DETS)):
+            for m in ("pooled_auc", "within_run_auc", "pr_auc"):
+                ks = [f"perf.{w}.{d}.{m}.pooled" for d in members]
+                b.derive(f"rng.perf.{w}.{grp}.{m}.min", "min", ks)
+                b.derive(f"rng.perf.{w}.{grp}.{m}.max", "max", ks)
+        for op in ("b0.01", "b0.05"):
+            for m in ("episode_rate", "fpr", "trailing_fa_per_h", "sham_episode"):
+                ks = [f"oper.{w}.{d}.{m}.{op}.pooled" for d in DETS]
+                b.derive(f"rng.oper.{w}.{m}.{op}.min", "min", ks)
+                b.derive(f"rng.oper.{w}.{m}.{op}.max", "max", ks)
+            ks = [f"lat.{w}.pooled.{d}.{op}.rate" for d in DETS]
+        wl = {"ec": "ecommerce", "iot": "iot"}[w]
+        for m in ("false_per_h", "trailing_episodes_per_h", "detection_rate", "alert_windows_per_h"):
+            ks = [f"replay.{w}.{d}.fpb_0.01.{m}.pooled_c2_c3" for d in DETS]
+            b.derive(f"rng.replay.{w}.{m}.min", "min", ks)
+            b.derive(f"rng.replay.{w}.{m}.max", "max", ks)
+        ks = [f"fault.{w}.{d}.F8.pooled_auc.pooled_c2_c3" for d in DETS]
+        b.derive(f"rng.fault.{w}.F8.min", "min", ks)
+        b.derive(f"rng.fault.{w}.F8.max", "max", ks)
+        others = [f"fault.{w}.{d}.{f}.pooled_auc.pooled_c2_c3" for d in DETS for f in ("F1", "F2", "F4", "F5", "F7")]
+        b.derive(f"rng.fault.{w}.F12457.min", "min", others)
+        cs = ["ec-a", "ec-b", "ec-c"] if w == "ec" else ["iot-a", "iot-b", "iot-c"]
+        b.derive(f"sum.gate.{w}.F7_TM_LOSS", "sum", [f"gate.{c}.F7.flag_F7_TM_LOSS" for c in cs])
+        b.derive(f"sum.gate.{w}.valid", "sum", [f"gate.{c}.{rt}.VALID" for c in cs
+                                                for rt in ("F0", "F1", "F2", "F4", "F5", "F6", "F7", "F8")])
+        ks = [f"sat.{w}.{c}.{d}.frac_at_max" for c in cs[1:] for d in AE]
+        b.derive(f"rng.sat.{w}.AE.frac.min", "min", ks, fmt=lambda x: f"{100 * x:.0f}\\%")
+        b.derive(f"rng.sat.{w}.AE.frac.max", "max", ks, fmt=lambda x: f"{100 * x:.0f}\\%")
+        ks = [f"rfimp.{c}.jvm.share_of_top50_importance" for c in cs]
+        b.derive(f"rng.rfimp.{w}.jvm.min", "min", ks, fmt=lambda x: f"{100 * x:.0f}\\%")
+        b.derive(f"rng.rfimp.{w}.jvm.max", "max", ks, fmt=lambda x: f"{100 * x:.0f}\\%")
+    for w in ("ec", "iot"):
+        cs = ["ec-b", "ec-c"] if w == "ec" else ["iot-b", "iot-c"]
+        ks = [f"sat.{w}.{c}.{d}.auc_best_case" for c in cs for d in AE]
+        b.derive(f"rng.sat.{w}.AE.best.min", "min", ks)
+        b.derive(f"rng.sat.{w}.AE.best.max", "max", ks)
+        ks = [f"magf.{w}.{d}.d_mean" for d in DETS if d != "EWMA" and have(f"magf.{w}.{d}.d_mean")]
+        b.derive(f"rng.magf.{w}.others.min", "min", ks)
+        b.derive(f"rng.magf.{w}.others.max", "max", ks)
+        for grp, vs in (("single", ["broker", "consumer", "flink", "jvm"]),
+                        ("leaveout", ["no_broker", "no_consumer", "no_flink", "no_jvm"])):
+            ks = [f"cat.{w}.{v}.pooled_auc.diff" for v in vs]
+            b.derive(f"rng.cat.{w}.{grp}.min", "min", ks)
+            b.derive(f"rng.cat.{w}.{grp}.max", "max", ks)
+        ks = [f"rayleigh.{w}.all_three.{f}.p" for f in ("F1", "F2", "F4", "F5", "F6", "F7", "F8")]
+        b.derive(f"rng.rayleigh.{w}.min", "min", ks, fmt=lambda x: tex_num(pfmt(x)))
+        ks = [f"lofo.{w}.{d}.{f}.f1_cost.pooled_c2_c3" for d in DETS for f in ("F1", "F2", "F4", "F5", "F6", "F7", "F8")
+              if have(f"lofo.{w}.{d}.{f}.f1_cost.pooled_c2_c3")]
+        b.derive(f"mean.lofo.{w}.f1_cost", "mean", ks)
+        b.derive(f"rng.lofo.{w}.f1_cost.max", "max", ks)
+        ks = [f"iqr.{w}.{d}.pooled_c2_c3_f1" for d in DETS]
+        b.derive(f"rng.iqr.{w}.f1.min", "min", ks)
+        b.derive(f"rng.iqr.{w}.f1.max", "max", ks)
+        ks = [f"prev.{w}.{d}.fpb_0.01.0.01.f1" for d in DETS if have(f"prev.{w}.{d}.fpb_0.01.0.01.f1")]
+        b.derive(f"rng.prev.{w}.1pct.f1.min", "min", ks)
+        b.derive(f"rng.prev.{w}.1pct.f1.max", "max", ks)
+        ks = [f"phasecov.{w}.{d}.p_phase" for d in DETS if have(f"phasecov.{w}.{d}.p_phase")]
+        b.derive(f"rng.phasecov.{w}.min", "min", ks, fmt=lambda x: tex_num(pfmt(x)))
+        ks = [f"lat.{w}.pooled.{d}.b0.01.rmst" for d in DETS]
+        b.derive(f"rng.lat.{w}.b0.01.rmst.min", "min", ks, fmt=lambda x: f"{x:.0f}")
+        b.derive(f"rng.lat.{w}.b0.01.rmst.max", "max", ks, fmt=lambda x: f"{x:.0f}")
+        ks = [f"lat.{w}.pooled.{d}.b0.01.rate" for d in DETS]
+        b.derive(f"rng.lat.{w}.b0.01.rate.min", "min", ks, fmt=lambda x: f"{100 * x:.0f}\\%")
+        b.derive(f"rng.lat.{w}.b0.01.rate.max", "max", ks, fmt=lambda x: f"{100 * x:.0f}\\%")
+        ks = [f"cost.{w}.{d}.score_ms_per_window" for d in DETS]
+        b.derive(f"rng.cost.{w}.batch.max", "max", ks, fmt=lambda x: f"{x:.2f}")
+        ks = [f"cost.{w}.{d}.fit_s" for d in DEEP]
+        b.derive(f"rng.cost.{w}.deepfit.min", "min", ks, fmt=lambda x: f"{x:.1f}")
+        b.derive(f"rng.cost.{w}.deepfit.max", "max", ks, fmt=lambda x: f"{x:.1f}")
+        ks = [f"three.{w}.{d}.recovery.auc.pooled_c2_c3" for d in DETS]
+        b.derive(f"rng.three.{w}.recovery.auc.min", "min", ks)
+        b.derive(f"rng.three.{w}.recovery.auc.max", "max", ks)
+        ks = [f"classical.{w}.{d}.d_pooled_auc_vs_RuleBased" for d in ("LODA", "COPOD")]
+        b.derive(f"rng.classical.{w}.lodacopod.min", "min", ks)
+        b.derive(f"rng.classical.{w}.lodacopod.max", "max", ks)
+    allc = ["ec-a", "ec-b", "ec-c", "iot-a", "iot-b", "iot-c"]
+    for w in ("ec", "iot"):
+        if have(f"phm.{w}.LSTM_AE.est"):
+            for grp, mem in (("AE", AE), ("deep", DEEP)):
+                b.derive(f"rng.phm.{w}.{grp}.min", "min", [f"phm.{w}.{d}.est" for d in mem])
+                b.derive(f"rng.phm.{w}.{grp}.max", "max", [f"phm.{w}.{d}.est" for d in mem])
+        if have(f"phc.{w}.IF.within_run_auc_all"):
+            b.derive(f"rng.phc.{w}.wr.maxabsdiff", "maxabsdiff",
+                     [k for d in DETS for k in (f"phc.{w}.{d}.within_run_auc_all", f"phc.{w}.{d}.within_run_auc_without")])
+            b.derive(f"rng.phc.{w}.r1.maxabsdiff", "maxabsdiff",
+                     [k for d in DETS for k in (f"phc.{w}.{d}.r1_placebo_all", f"phc.{w}.{d}.r1_placebo_without")])
+            b.derive(f"rng.phc.{w}.c1.AE.min", "min", [f"phc.{w}.{d}.c1_without_est" for d in AE])
+            b.derive(f"rng.phc.{w}.c1.AE.max", "max", [f"phc.{w}.{d}.c1_without_est" for d in AE])
+            b.derive(f"rng.phc.{w}.c1.AE.hi.max", "max", [f"phc.{w}.{d}.c1_without_hi" for d in AE])
+        if have(f"phf8.{w}.IF.f8_vs_normal"):
+            b.derive(f"rng.phf8.{w}.normal.min", "min", [f"phf8.{w}.{d}.f8_vs_normal" for d in DETS])
+            b.derive(f"rng.phf8.{w}.normal.max", "max", [f"phf8.{w}.{d}.f8_vs_normal" for d in DETS])
+            b.derive(f"rng.phf8.{w}.without.min", "min", [f"phf8.{w}.{d}.auc_without_f8" for d in DETS])
+            b.derive(f"rng.phf8.{w}.without.max", "max", [f"phf8.{w}.{d}.auc_without_f8" for d in DETS])
+            b.derive(f"rng.phf8.{w}.c1.min", "min", [f"phf8.{w}.{d}.c1_est" for d in DEEP])
+            b.derive(f"rng.phf8.{w}.c1.max", "max", [f"phf8.{w}.{d}.c1_est" for d in DEEP])
+        if have(f"phmag.{w}.IF.d_mean"):
+            ks = [f"phmag.{w}.{d}.d_mean" for d in DETS if d != "EWMA"]
+            b.derive(f"rng.phmag.{w}.others.min", "min", ks)
+            b.derive(f"rng.phmag.{w}.others.max", "max", ks)
+        if have(f"phfpr.{w}.IF.0.01.normal.fpr"):
+            ks = [f"phfpr.{w}.{d}.0.01.normal.fpr" for d in DETS if d != "EWMA"]
+            b.derive(f"rng.phfpr.{w}.normal.min", "min", ks)
+            b.derive(f"rng.phfpr.{w}.normal.max", "max", ks)
+            ks = [f"phfpr.{w}.{d}.0.01.recovery.fpr" for d in DETS]
+            b.derive(f"rng.phfpr.{w}.recovery.min", "min", ks)
+            b.derive(f"rng.phfpr.{w}.recovery.max", "max", ks)
+        if have(f"phfas.{w}.IF.0.01.recovery_share"):
+            ks = [f"phfas.{w}.{d}.0.01.recovery_share" for d in DETS if d != "EWMA"]
+            pct = lambda x: f"{100 * x:.0f}\\%"
+            b.derive(f"rng.phfas.{w}.min", "min", ks, fmt=pct)
+            b.derive(f"rng.phfas.{w}.max", "max", ks, fmt=pct)
+        ks = [f"perf.{w}.{d}.r1_placebo.pooled" for d in DETS]
+        b.derive(f"rng.perf.{w}.r1placebo.min", "min", ks)
+        b.derive(f"rng.perf.{w}.r1placebo.max", "max", ks)
+        ks = [f"fault.{w}.{d}.{f}.pooled_auc.pooled_c2_c3" for d in DETS for f in ("F1", "F2")]
+        b.derive(f"rng.fault.{w}.F12.min", "min", ks)
+        if have(f"ec2.{w}.LSTM_AE.median_s"):
+            ks = [f"ec2.{w}.{d}.median_s" for d in DEEP if have(f"ec2.{w}.{d}.median_s")]
+            b.derive(f"rng.ec2.{w}.deep.min", "min", ks, fmt=lambda x: f"{x:.1f}")
+            b.derive(f"rng.ec2.{w}.deep.max", "max", ks, fmt=lambda x: f"{x:.1f}")
+    if have("rng.oper.ec.trailing_fa_per_h.b0.01.min") and have("rng.oper.iot.trailing_fa_per_h.b0.01.min"):
+        b.derive("rng.oper.trailing_fa_per_h.b0.01.min", "min", ["rng.oper.ec.trailing_fa_per_h.b0.01.min",
+                                                                 "rng.oper.iot.trailing_fa_per_h.b0.01.min"])
+        b.derive("rng.oper.trailing_fa_per_h.b0.01.max", "max", ["rng.oper.ec.trailing_fa_per_h.b0.01.max",
+                                                                 "rng.oper.iot.trailing_fa_per_h.b0.01.max"])
+    if have("rng.phc.ec.wr.maxabsdiff") and have("rng.phc.iot.wr.maxabsdiff"):
+        b.derive("rng.phc.wr.maxabsdiff", "max", ["rng.phc.ec.wr.maxabsdiff", "rng.phc.iot.wr.maxabsdiff"])
+        b.derive("rng.phc.r1.maxabsdiff", "max", ["rng.phc.ec.r1.maxabsdiff", "rng.phc.iot.r1.maxabsdiff"])
+    sigs = ["F1", "F2", "F4", "F5", "F6", "F7", "F8"]
+    if have("sfp.ec-a.F1.sham_attempts"):
+        b.derive("sum.sfp.attempts", "sum", [f"sfp.{c}.{s}.sham_attempts" for c in allc for s in sigs])
+        b.derive("sum.sfp.passes", "sum", [f"sfp.{c}.{s}.false_passes" for c in allc for s in sigs])
+    if have("xsig.ec-a.F1.F2.attempts"):
+        off = [(c, r, s) for c in allc for r in sigs for s in sigs if r != s]
+        b.derive("sum.xsig.offdiag.attempts", "sum", [f"xsig.{c}.{r}.{s}.attempts" for c, r, s in off])
+        b.derive("sum.xsig.offdiag.passes", "sum", [f"xsig.{c}.{r}.{s}.passes" for c, r, s in off])
+    if have("phdrift.ec-a.first6h_vs_last6h.cv_auc_blocked"):
+        ks = [f"phdrift.{c}.{t}.cv_auc_blocked" for c in allc for t in ("first6h_vs_last6h", "leading_vs_trailing")]
+        b.derive("rng.phdrift.min", "min", ks, fmt=lambda x: f"{x:.2f}")
+        b.derive("rng.phdrift.max", "max", ks, fmt=lambda x: f"{x:.2f}")
+    ks = [f"drift.{c}.{t}.{f}.cv_auc" for c in allc for t in ("first6h_vs_last6h", "leading_vs_trailing")
+          for f in ("all_features", "without_jvm_buffer_pool")]
+    b.derive("rng.drift.min", "min", ks, fmt=lambda x: f"{x:.2f}")
+    ks = [f"labels.{c}.anomalous_prevalence_attempt_windows" for c in allc]
+    b.derive("rng.labels.prev.min", "min", ks)
+    b.derive("rng.labels.prev.max", "max", ks)
+    b.derive("sum.labels.windows", "sum", [f"labels.{c}.windows_total" for c in allc])
+    b.derive("sum.gate.valid", "sum", ["sum.gate.ec.valid", "sum.gate.iot.valid"])
+    b.derive("rng.facts.nseries.min", "min", [f"facts.build.{c}.n_series" for c in allc])
+    b.derive("rng.facts.nseries.max", "max", [f"facts.build.{c}.n_series" for c in allc])
 
 
 def write(b: Book, tex: Path, claims: Path, inputs: dict):
@@ -291,8 +520,11 @@ def main(argv=None):
     if (out / "describe" / "performance.parquet").is_file():
         describe_numbers(b, out)
     table_numbers(b, out)
+    if (out / "facts.json").is_file():
+        facts_numbers(b, json.loads((out / "facts.json").read_text()))
+    derived_numbers(b)
     inputs = {str(f.relative_to(out)): sha256_file(f) for f in [out / "confirm.json", out / "posthoc.json",
-              *sorted((out / "describe").glob("*.parquet")), *[out / s for s, *_ in TABLES]] if f.is_file()}
+              *sorted((out / "describe").glob("*.parquet")), *[out / s for s, *_ in TABLES], out / "facts.json"] if f.is_file()}
     write(b, Path(a.tex), Path(a.claims), inputs)
     print(f"numbers: {len(b.vals)} keys to {a.tex}")
 

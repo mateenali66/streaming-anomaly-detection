@@ -64,6 +64,14 @@ def check_claims(results: Path, claims: dict) -> list[str]:
     errors, cache = [], {}
     for key, c in claims["numbers"].items():
         src, field = c["source"], c["field"]
+        if src == "derived":
+            op, keys = field.split(":", 1)
+            vals = [claims["numbers"][k]["value"] for k in keys.split("|")]
+            got = {"min": min, "max": max, "sum": sum, "mean": lambda x: sum(x) / len(x),
+                   "maxabsdiff": lambda x: max(abs(x[i] - x[i + 1]) for i in range(0, len(x), 2))}[op](vals)
+            if not _same(c["value"], got):
+                errors.append(f"claim {key}: derived {op} now gives {got!r}, claims.json holds {c['value']!r}")
+            continue
         if "*" in field:
             continue        # an aggregate over many cells, checked by recomputing it in numbers.py's tests
         p = results / src
@@ -80,9 +88,10 @@ def check_claims(results: Path, claims: dict) -> list[str]:
                     sel = sel[sel[k].astype(str) == v]
                 if len(sel) != 1:
                     raise KeyError(f"{len(sel)} rows match")
-                if pd.isna(sel.iloc[0][part if src.endswith(".csv") else "pooled_mean"]) and c["value"] is None:
+                col = ({"pooled": "pooled_mean", "c1": "c1_mean", "lo": "pooled_lo", "hi": "pooled_hi"}.get(part, part)
+                       if src.endswith(".parquet") else part)
+                if pd.isna(sel.iloc[0][col]) and c["value"] is None:
                     continue
-                col = {"pooled": "pooled_mean", "c1": "c1_mean", "lo": "pooled_lo", "hi": "pooled_hi"}.get(part, part)
                 got = sel.iloc[0][col]
             else:
                 continue
@@ -160,7 +169,8 @@ def main(argv=None):
         errors.append(f"numbers.tex and claims.json disagree on {len(set(claims['numbers']) ^ defined)} keys")
     if a.tex:
         tex = "".join(Path(t).read_text() for t in [a.tex])
-        for k in sorted(set(re.findall(r"\\R\{([^}]*)\}", tex)) - defined):
+        uncommented = re.sub(r"(?<!\\)%.*", "", tex)
+        for k in sorted(set(re.findall(r"\\R\{([^}]*)\}", uncommented)) - defined):
             errors.append(f"manuscript uses undefined key {k}")
         allowed = set(json.loads(Path(a.allow).read_text())) if a.allow else set()
         hits = bare_numbers(tex, allowed)
