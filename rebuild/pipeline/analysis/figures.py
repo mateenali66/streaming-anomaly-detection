@@ -142,7 +142,7 @@ def fig_protocol(dest):
     """The run protocol of 1.3 as a timeline, drawn from its registered lengths (no data). Widths are schematic for
     the short segments."""
     segs = [("Settle\n0-300 s", 150, "0.88", None), ("Pre-fault\n600 s", 600, "#9ecae1", "NORMAL"),
-            ("Apply", 70, "0.88", None), ("Injection\n180 or 300 s", 300, "#fc9272", "ANOMALOUS\n(sham: SHAM)"),
+            ("Apply\n$\\leq$30 s", 125, "0.88", None), ("Injection\n180 or 300 s", 300, "#fc9272", "ANOMALOUS\n(sham: SHAM)"),
             ("Recovery\n300 s", 300, "#fdd0a2", "RECOVERY\n(sham: SHAM_POST)"), ("Cooldown\n300 s", 300, "0.88", None),
             ("Recovery\ngate", 170, "0.88", None)]
     fig, ax = plt.subplots(figsize=(7.0, 1.5))

@@ -96,11 +96,15 @@ def t_ewma(out, inputs):
             cells += [ci(r["d_pooled_auc"], r["d_pooled_auc_lo"], r["d_pooled_auc_hi"], True),
                       ci(r["d_within_run_auc"], r["d_within_run_auc_lo"], r["d_within_run_auc_hi"], True)]
         rows.append(" & ".join(cells))
-    return table("tab_ewma_mechanism.tex", "EWMA with one component changed, minus the published EWMA.",
+    return table("tab_ewma_mechanism.tex", "EWMA with one component changed, minus EWMA as defined in Section~\\ref{subsec:models}.",
                  "tab:ewma-mech", "lllll", "& \\multicolumn{2}{c}{E-commerce} & \\multicolumn{2}{c}{IoT} \\\\ "
                  "Variant & Pooled AUC & Within-run AUC & Pooled AUC & Within-run AUC", rows,
                  "Exploratory (protocol 5.9.7). Paired fold differences pooled over campaigns 2 and 3 with 95\\% intervals, "
-                 "no adjustment. Every variant gets the panel's per-fold features.", inputs, wide=True)
+                 "no adjustment. Every variant gets the panel's per-fold features. Within-run is plain within-run AUC. Sigmoid "
+                 "squash passes the score through the autoencoders' sigmoid. Scale floored sets each feature's EWMA "
+                 "scale to at least 0.1 training SD. Mean square, train mean pools by the mean square with the centre "
+                 "at the training mean. Drop three dominant removes the three features that most often set the maximum "
+                 "on cal.", inputs, wide=True)
 
 
 def t_classical(out, inputs):
@@ -120,7 +124,9 @@ def t_classical(out, inputs):
                  "tab:classical", "lllll", "& \\multicolumn{2}{c}{E-commerce} & \\multicolumn{2}{c}{IoT} \\\\ "
                  "Detector & Pooled AUC & Within-run AUC & Pooled AUC & Within-run AUC", rows,
                  "Exploratory (protocol 5.9.5 and 5.9.6). Paired fold differences pooled over campaigns 2 and 3, 95\\% "
-                 "intervals for pooled AUC. CUSUM and matrix profile run as R1 coded them.", inputs)
+                 "intervals for pooled AUC. CUSUM and matrix profile run as the earlier version coded them. The registered POT "
+                 "returns an exceedance probability, which is not monotone in the window's largest z-score. The "
+                 "monotone POT, from an unsubmitted draft of this revision (D6), rises with it.", inputs)
 
 
 def t_cost(out, inputs):
@@ -137,13 +143,13 @@ def t_cost(out, inputs):
                       "n/a" if pd.isna(e) else f"{e:.1f}"]
         rows.append(" & ".join(cells))
     machine = m.get("cpu", "the analysis machine")
-    return table("tab_cost.tex", "Training time per fit and scoring time per window on one machine.", "tab:cost",
+    return table("tab_cost.tex", "Fit time and scoring time per window on a laptop, with the training machine's job time.", "tab:cost",
                  "llllllllll", "& & \\multicolumn{4}{c}{E-commerce} & \\multicolumn{4}{c}{IoT} \\\\ Detector & Device "
                  "& Fit (s) & Batch (ms) & Single (ms) & EC2 job (s) & Fit (s) & Batch (ms) & Single (ms) & EC2 job (s)", rows,
                  f"One fit per model on fold 1 of campaign 1, frozen configuration, {machine}. Batch is the whole "
                  "test block per window, single is the median of 256 one-window calls. Fit time excludes the fold's "
                  "feature preparation. EC2 job is the median phase B fit and scoring time per fold on the training machine, four "
-                 "jobs per A10G GPU.", inputs, wide=True)
+                 "jobs per A10G GPU. mps is the laptop GPU.", inputs, wide=True)
 
 
 def t_replay(out, inputs):
@@ -156,12 +162,14 @@ def t_replay(out, inputs):
             cells += [f"{g('false_per_h'):.2f}", f"{g('trailing_episodes_per_h'):.2f}", f3(g("detection_rate")),
                       f"{g('alert_windows_per_h'):.1f}"]
         rows.append(" & ".join(cells))
-    return table("tab_replay.tex", "Chronological alert replay at the 1\\% budget: false episodes and detected faults.",
+    return table("tab_replay.tex", "False episodes and detected faults in a chronological alert replay at the 1\\% budget.",
                  "tab:replay", "lllllllll", "& \\multicolumn{4}{c}{E-commerce} & \\multicolumn{4}{c}{IoT} \\\\ "
                  "Detector & False/h & Trailing/h & Detected & Windows/h & False/h & Trailing/h & Detected & "
                  "Windows/h", rows,
-                 "Exploratory (protocol 5.9.18). Alerted windows within 120 s join one episode. False episodes hold only NORMAL "
-                 "windows. Windows/h counts alerted negative windows, most of them RECOVERY right after a fault.",
+                 "Exploratory (protocol 5.9.18). Alerted windows at most 120 s apart join one episode. False/h counts "
+                 "episodes of NORMAL windows only, per hour of scored test-block time. Trailing/h counts episodes per hour "
+                 "of the trailing baseline. Detected equals Episode in Table~\\ref{tab:oper-0.01}. Windows/h counts "
+                 "every alerted window of the test block per hour, fault windows included.",
                  inputs, wide=True)
 
 
@@ -172,11 +180,12 @@ def t_drift(out, inputs):
         rows.append(" & ".join([c, *(f"{d.loc[(c, t, f), 'cv_auc']:.2f}" for t in ("first6h_vs_last6h",
                                                                                   "leading_vs_trailing")
                                      for f in ("all_features", "without_jvm_buffer_pool"))]))
-    return table("tab_drift.tex", "Drift check: cross-validated AUC of a classifier separating baseline periods.",
+    return table("tab_drift.tex", "Cross-validated AUC of the drift check, a classifier separating baseline periods.",
                  "tab:drift", "lllll", "& \\multicolumn{2}{c}{First vs last 6 h} & \\multicolumn{2}{c}{Leading vs "
                  "trailing} \\\\ Campaign & All & No buffer pools$^{a}$ & All & No buffer pools$^{a}$", rows,
                  "Random forest, five-fold cross-validation (protocol 1.5.4). Above 0.70 counts as drift, so every pooled "
-                 "result carries the drift note of protocol 4.6.4. A time-blocked version also gives 1.00 everywhere. $^{a}$Post hoc.", inputs)
+                 "result carries the drift note of protocol 4.6.4. A time-blocked version, also post hoc, gives 1.00 everywhere. "
+                 "$^{a}$Post hoc. Every JVM buffer pool column removed.", inputs)
 
 
 def t_checks(out, inputs):
@@ -193,7 +202,7 @@ def t_checks(out, inputs):
         rows.append(f"{lab} & Onset phase by fault, smallest Rayleigh $p$ & n/a & {tex_num(pfmt(min(rp)))}")
         x = lofo[(lofo["workload"] == w) & (lofo["metric"] == "f1_cost") & lofo["detector"].isin(DETS)]
         rows.append(f"{lab} & Threshold-only LOFO, mean F1 cost & n/a & {f3(x['pooled_c2_c3'].mean())}")
-    return table("tab_checks.tex", "Design checks: carryover, load phase balance and label-free threshold transfer.",
+    return table("tab_checks.tex", "Design checks of carryover, load phase balance and label-free threshold transfer.",
                  "tab:checks", "llll", "Workload & Check & Campaigns 1 / 2 / 3 & Pooled", rows,
                  "Exploratory (protocol 5.9.14, 5.9.15 and 5.9.9), no adjustment. Carryover compares pre-fault max-z by the "
                  "preceding run type. Rayleigh tests the uniformity of each fault's onset phase in the 30-minute "
@@ -229,8 +238,9 @@ def t_frozen(frozen: Path, inputs):
     return table("tab_frozen.tex", "Frozen configurations from campaign 1's fold winners, used for every later fit.",
                  "tab:frozen", "p{0.13\\linewidth}p{0.4\\linewidth}p{0.4\\linewidth}",
                  "Model & E-commerce & IoT", rows,
-                 "Consensus of the ten fold winners of the 100-trial search (protocol 6.1.2): medians rounded to the search "
-                 "grid, modes for categorical values, ties to the smaller model. Search spaces are in train.py.",
+                 "Consensus of the ten fold winners of the 100-trial search, 50 trials for the random forest (protocol 6.1.2). "
+                 "Medians rounded to the search grid, modes for categorical values, ties to the smaller model. Search "
+                 "spaces are in train.py.",
                  inputs, wide=True)
 
 
@@ -254,9 +264,9 @@ def t_sensitivity(out, inputs):
                  "tab:sensitivity", "lllllll",
                  "& \\multicolumn{3}{c}{E-commerce} & \\multicolumn{3}{c}{IoT} \\\\ Detector & Matched windows & "
                  "Without F8 & Within-run, no post-F1 & Matched windows & Without F8 & Within-run, no post-F1", rows,
-                 "Post hoc (D5, D6). Pooled over campaigns 2 and 3 with 95\\% intervals. Matched windows: pooled AUC "
-                 "on the test windows all eight panel models score. Without F8: pooled AUC with F8 windows removed from "
-                 "the positives. Within-run, no post-F1: plain within-run AUC without the fault runs that follow a "
+                 "Post hoc (D5, D6). Pooled over campaigns 2 and 3 with 95\\% intervals. Matched windows is pooled AUC "
+                 "on the test windows all eight panel models score. Without F8 is pooled AUC with the F8 windows removed "
+                 "from the positives. Within-run, no post-F1 is plain within-run AUC without the fault runs that follow a "
                  "broker kill.", inputs, wide=True)
 
 

@@ -454,6 +454,8 @@ def derived_numbers(b: Book):
         b.derive(f"rng.perf.{w}.r1placebo.max", "max", ks)
         ks = [f"fault.{w}.{d}.{f}.pooled_auc.pooled_c2_c3" for d in DETS for f in ("F1", "F2")]
         b.derive(f"rng.fault.{w}.F12.min", "min", ks)
+        ks = [f"fault.{w}.{d}.{f}.pooled_auc.pooled_c2_c3" for d in DETS for f in ("F1", "F2", "F5", "F7")]
+        b.derive(f"rng.fault.{w}.F1257.min", "min", ks)
         if have(f"ec2.{w}.LSTM_AE.median_s"):
             ks = [f"ec2.{w}.{d}.median_s" for d in DEEP if have(f"ec2.{w}.{d}.median_s")]
             b.derive(f"rng.ec2.{w}.deep.min", "min", ks, fmt=lambda x: f"{x:.1f}")

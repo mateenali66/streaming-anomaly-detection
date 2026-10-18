@@ -68,6 +68,10 @@ def t_confirm(res, inputs):
             W = res["workloads"][w]
             out = (("superior" if W["C5_superior"] else "not significant") if h == "C5"
                    else W["hypotheses"][h]["outcome"])
+            if h == "C6":
+                H6 = W["hypotheses"]["C6"]
+                n_sup = sum(H6["contrasts"][m]["decision"]["outcome"] == "superior" for m in PANEL)
+                out = f"{len(H6['equivalent_models'])} of {len(PANEL)} equivalent" + (f", {n_sup} superior" if n_sup else "")
             cells += [out.replace("model beats max-z: ", "beats max-z: "), tex_num(pfmt(W["family_p"][h])),
                       tex_num(pfmt(W["family_p_holm"][h]))]
         rows.append(" & ".join(cells))
@@ -75,13 +79,16 @@ def t_confirm(res, inputs):
     n_all = sum(len(D) for D in res["C7"].values())
     rows.append(f"C7 & Reproducible within $\\Delta$ & \\multicolumn{{6}}{{l}}{{{n_rep} of {n_all} detector and "
                 f"workload pairs}}")
-    return table("tab_confirm_summary.tex", "Confirmatory hypotheses C1 to C7: outcomes, family p and Holm-adjusted p.",
+    return table("tab_confirm_summary.tex", "Outcomes, family p and Holm-adjusted p of confirmatory hypotheses C1 to C7.",
                  "tab:confirm", "llllllll",
                  "& & \\multicolumn{3}{c}{E-commerce} & \\multicolumn{3}{c}{IoT} \\\\ ID & Contrast & Outcome & $p$ & "
                  "Holm $p$ & Outcome & $p$ & Holm $p$", rows,
                  "Pooled over campaigns 2 and 3, ten folds each, margin $\\Delta=0.03$ AUC. Holm runs over the seven "
-                 "hypotheses of each workload (D4). Each $p$ is that of the hypothesis's superiority test. C5 is one "
-                 "test across both workloads.", inputs, wide=True)
+                 "hypotheses of each workload (D4). Each $p$ is the one that enters Holm, the smallest Holm-adjusted $p$ "
+                 "over the models for C1 and C6, the larger of its two metrics' $p$ for C2a, the pooled two-sided $p$ "
+                 "for C2b, C3 and C4, and the one-sided permutation $p$ for C5, one test across both workloads that "
+                 "enters both families. C3 is inferior on pooled AUC, and its within-run half is inconclusive, so it "
+                 "makes no headline.", inputs, wide=True)
 
 
 def t_c1(res, ph, inputs):
@@ -132,15 +139,17 @@ def t_confirm_detail(res, w, inputs):
                   "0 (singular)" if re_["singular"] else f"{re_['icc']:.2f}"]
         rows.append(" & ".join(cells))
     lab = {"ecommerce": "E-commerce", "iot": "IoT"}[w]
-    return table(f"tab_confirm_detail_{w}.tex", f"{lab} confirmatory contrasts: statistics per campaign and for the pool.",
+    return table(f"tab_confirm_detail_{w}.tex", f"{lab} confirmatory contrasts, with statistics per campaign and for the pool.",
                  f"tab:confirm-detail-{w}", "l" + "l" * 9,
                  f"& \\multicolumn{{3}}{{c}}{{Campaign 2 ({cs[0]})}} & \\multicolumn{{3}}{{c}}{{Campaign 3 ({cs[1]})}} & "
-                 "\\multicolumn{3}{c}{Pooled} \\\\ Contrast & Mean [BCa 95\\%] & Wilcoxon $p$ & $r_{rb}$ & "
+                 "\\multicolumn{3}{c}{Pooled} \\\\ \\cmidrule(lr){2-4}\\cmidrule(lr){5-7}\\cmidrule(lr){8-10} Contrast & Mean [BCa 95\\%] & Wilcoxon $p$ & $r_{rb}$ & "
                  "Mean [BCa 95\\%] & Wilcoxon $p$ & $r_{rb}$ & Sign-flip $p$ & $\\tau$ & ICC", rows,
-                 "Ten folds per campaign. Exact two-sided Wilcoxon signed-rank $p$ and matched-pairs rank-biserial "
-                 "correlation per campaign. The sign-flip $p$ is exact over all $2^{20}$ vectors. $\\tau$ and the ICC "
-                 "come from the one-way REML estimate, singular when $\\tau$ is 0. Corrected is placebo-corrected "
-                 "within-run AUC.", inputs, wide=True)
+                 "Ten folds per campaign. Signs as in Table~\\ref{tab:hypotheses}. Rows marked pooled and the C6 rows use "
+                 "pooled AUC, C3 on the windows all eight panel models score. Corrected rows use placebo-corrected "
+                 "within-run AUC. Exact two-sided Wilcoxon signed-rank $p$ and matched-pairs rank-biserial correlation "
+                 "per campaign. The two-sided sign-flip $p$ is exact over all $2^{20}$ sign vectors of the 20 folds. "
+                 "$\\tau$ and the ICC come from the one-way REML estimate, singular when $\\tau$ is 0. Replication uses "
+                 "the per-campaign $t$ interval, and the BCa interval shown gives the same status.", inputs, wide=True)
 
 
 def t_c6(res, inputs):
@@ -159,7 +168,8 @@ def t_c6(res, inputs):
                  "Per target block, the mean over the two same-workload sources minus the mean over the three "
                  "other-workload sources (D2). Pooled over targets in campaigns 2 and 3. Superior needs the "
                  "Holm-adjusted $p$ over the eight panel models below 0.05, so an interval above 0 can still end "
-                 "equivalent. The random forest is a reference outside C6 with no adjustment.", inputs)
+                 "equivalent. 20 folds, 95\\% intervals in brackets. The random forest is a reference outside C6 with "
+                 "no adjustment.", inputs)
 
 
 def t_c7(res, inputs):
@@ -176,7 +186,7 @@ def t_c7(res, inputs):
                  "tab:c7", "lllllll", "& \\multicolumn{3}{c}{E-commerce} & \\multicolumn{3}{c}{IoT} \\\\ Detector & "
                  "Campaigns 1 / 2 / 3 & Max dev. & Repr. & Campaigns 1 / 2 / 3 & Max dev. & Repr.", rows,
                  "Reproducible when every campaign mean lies within $\\Delta=0.03$ of the three-campaign mean. "
-                 "Descriptive, no $p$-value.", inputs, wide=True)
+                 "Campaign 1 is the search campaign. Descriptive, no $p$-value.", inputs, wide=True)
 
 
 def t_rq1(perf, w, inputs):
@@ -193,9 +203,9 @@ def t_rq1(perf, w, inputs):
                                 f"{f3(g('pr_auc'))} ({f3(g('prevalence'))})",
                                 f"{f3(g('f1_f1opt'))} ({f3(g('always_fire_f1_f1opt'))})"]))
     return table(f"tab_rq1_{w}.tex", f"{WL[w]} detectors at the 30 s anchor, with the three diagnostic rows.",
-                 f"tab:rq1-{w}", "llllllll", "Detector & Pooled AUC, c1 & Pooled AUC, c2+c3 & Within-run AUC & "
+                 f"tab:rq1-{w}", "llllllll", "Detector & Pooled AUC, camp.\\ 1 & Pooled AUC, camp.\\ 2, 3 & Within-run AUC & "
                  "Within-run, corrected & R1 placebo & PR-AUC (prev.) & F1 (always-fire)", rows,
-                 "c1 is campaign 1 under the frozen configuration. Other columns pool campaigns 2 and 3 (20 folds) "
+                 "Camp.\\ 1 is campaign 1 under the frozen configuration. Other columns pool campaigns 2 and 3 (20 folds) "
                  "with 95\\% intervals for pooled AUC. Corrected is within-run AUC minus the sham placebo, so chance "
                  "is 0. The R1 placebo ranks each run's 5 late pre-fault windows against its 5 early ones, chance 0.5. "
                  "F1 at the F1-optimal threshold on cal. Sequence models score fewer windows, so their prevalence is "
@@ -217,14 +227,14 @@ def t_oper(oper, b, inputs):
                       f3(g("episode_rate")), f3(g("sham_episode"))]
         rows.append(" & ".join(cells))
     pct = f"{100 * float(b):.0f}\\%"
-    return table(f"tab_oper_b{b}.tex", f"Operating point at a {pct} false-positive budget set on cal NORMAL windows "
-                 "without labels.", f"tab:oper-{b}", "l" + "l" * 14,
+    return table(f"tab_oper_b{b}.tex", f"Operating point at a {pct} false-positive budget.", f"tab:oper-{b}", "l" + "l" * 14,
                  "& \\multicolumn{7}{c}{E-commerce} & \\multicolumn{7}{c}{IoT} \\\\ Detector & Rec. & Prec. & FPR & "
                  "FA/h & FA/h tr. & Episode & Sham ep. & Rec. & Prec. & FPR & FA/h & FA/h tr. & Episode & Sham ep.",
                  rows, "Means pooled over campaigns 2 and 3. FPR is realised on all test negatives, including RECOVERY. "
                  "FA/h counts alert onsets per hour of negative time on the test block and on the trailing baseline "
                  "(tr.). Episode is the share of fault runs with an alert in the labelled span, sham ep. the share of "
-                 "shams with one.", inputs, wide=True)
+                 "the 20 shams per workload with one. The threshold is a quantile of the cal block's NORMAL scores and "
+                 "uses no anomaly label.", inputs, wide=True)
 
 
 def t_latency(lat, inputs):
@@ -243,9 +253,12 @@ def t_latency(lat, inputs):
                  "& \\multicolumn{6}{c}{E-commerce} & \\multicolumn{6}{c}{IoT} \\\\ & \\multicolumn{3}{c}{1\\%} & "
                  "\\multicolumn{3}{c}{5\\%} & \\multicolumn{3}{c}{1\\%} & \\multicolumn{3}{c}{5\\%} \\\\ Detector & "
                  "Det. & RMST & Med. & Det. & RMST & Med. & Det. & RMST & Med. & Det. & RMST & Med.", rows,
-                 "140 fault runs per workload (campaigns 2 and 3). Time from the verified onset to the start of the "
-                 "first alerted window, censored at the labelled span, Kaplan-Meier. RMST is the restricted mean "
-                 "up to 300 s, in seconds. A median of 0 means half the runs alert in their first 30 s window.",
+                 "140 fault runs per workload (campaigns 2 and 3). Det. is the share of runs with an alert in their labelled "
+                 "span, as Episode in Table~\\ref{tab:oper-0.01}. RMST and median are Kaplan-Meier on the time from "
+                 "the verified onset to the start of the first alerted window, censored at the end of the span's last "
+                 "full window, so a missed run counts at its censoring time. RMST is restricted to 300 s, in seconds. "
+                 "A median of 0 means at least half the runs alert in their first 30 s window. The Kaplan-Meier curves "
+                 "of Fig.~\\ref{fig:latency} end slightly above Det. where shorter spans are censored early.",
                  inputs, wide=True)
 
 
