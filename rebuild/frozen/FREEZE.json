@@ -1,0 +1,3336 @@
+{
+ "frozen_files_sha256": {
+  "ecommerce.json": "355fdf59db45673eef8d615043433f71a3cdecddc98455c25a789572604c0bcf",
+  "iot.json": "099666096ef43384ca9dc8d0178aacf1349342733b0f0df7b27ac77e82eaaa1e"
+ },
+ "pipeline_config_sha256_file": "709aedb95909e252366a7fa60de74995415e56024d4488deec0cf8e5f26958d8",
+ "protocol": "6.1.2",
+ "source_campaigns": {
+  "ecommerce": "ec-a",
+  "iot": "iot-a"
+ },
+ "train_py_sha256": "45b23865e910a40a837853c2e86139d489e61a88aa48b306edbe892a2ae78fcc",
+ "training_config_sha256": "f5b37d8ccaacc48a292d3c5579fab003b266363a19aab2913240d0c7c05049e1",
+ "window_s": 30,
+ "workloads": {
+  "ecommerce": {
+   "CNN_AE": {
+    "consensus": {
+     "dropout": 0.28999779089982886,
+     "epochs": 70,
+     "filters": 16,
+     "kernel_size": 5,
+     "lr": 0.0008688543837287938,
+     "n_layers": 3,
+     "seq_length": 5
+    },
+    "distributions": {
+     "dropout": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.0, \"high\": 0.5, \"log\": false}}",
+     "epochs": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 10, \"low\": 30, \"high\": 100}}",
+     "filters": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [16, 32, 64, 128]}}",
+     "kernel_size": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [3, 5, 7]}}",
+     "lr": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.0001, \"high\": 0.01, \"log\": true}}",
+     "n_layers": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 1, \"low\": 2, \"high\": 4}}",
+     "seq_length": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 1, \"low\": 5, \"high\": 11}}"
+    },
+    "optuna_db_sha256": {
+     "1": "2ea1fe0473a149a236476e27886699eb88795b1ea1c320d230dbc36c1b52bd0b",
+     "10": "4d413b7b2de478778958cf71aecf896b8b2ff024eba3ff0a385927a5ab13bfe3",
+     "2": "749b7eb66ed1e6dad4a9aa19f6edac10bb7f1d15e8709157f43fe1928158af4c",
+     "3": "c28c551c141870ca281e9174d4eb63f967685af2bb8908c07ed35829ad7f0f07",
+     "4": "2631a7be24b92f4d04129d1ea433e385263594b2011baf1bdfd10ea7b3618171",
+     "5": "0e1261c3b143c96208485cd4122bcf693f1f4572deffab8b58448dd7e9354104",
+     "6": "6af4fc054c6c6b65b7c4e8b6a627fffb58326ea92ad50240c1a61048e7c83a45",
+     "7": "c62a4926e65588ca329d54546198b0c46d9fbfe8abee20095203e712943ae75e",
+     "8": "65f4ba7267870936c56ecc1724a2fe0b82bdc940a002ae3af1bfe7048950a2f9",
+     "9": "0cda991e7cecf95c24bc3f03c73b7c055eb4fa4a7dcdbd6fe14cf78ae94c839c"
+    },
+    "ties": [
+     {
+      "median": 75.0,
+      "param": "epochs",
+      "picked": 70,
+      "rule": "halfway, lower grid point"
+     },
+     {
+      "median": 3.5,
+      "param": "n_layers",
+      "picked": 3,
+      "rule": "halfway, lower grid point"
+     }
+    ],
+    "winners": [
+     {
+      "best_value": 0.8544726301735648,
+      "fold": 1,
+      "params": {
+       "dropout": 0.3320383254045909,
+       "epochs": 100,
+       "filters": 32,
+       "kernel_size": 7,
+       "lr": 0.007146210581279934,
+       "n_layers": 4,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_CNN_AE_fold1_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8469626168224299,
+      "fold": 2,
+      "params": {
+       "dropout": 0.18298387968508628,
+       "epochs": 40,
+       "filters": 16,
+       "kernel_size": 5,
+       "lr": 0.00027337667979242296,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_CNN_AE_fold2_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8348909657320872,
+      "fold": 3,
+      "params": {
+       "dropout": 0.2552864885692767,
+       "epochs": 100,
+       "filters": 128,
+       "kernel_size": 7,
+       "lr": 0.002761420398762429,
+       "n_layers": 4,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_CNN_AE_fold3_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.823874256584537,
+      "fold": 4,
+      "params": {
+       "dropout": 0.324709093230381,
+       "epochs": 80,
+       "filters": 16,
+       "kernel_size": 7,
+       "lr": 0.0002503107022266434,
+       "n_layers": 4,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_CNN_AE_fold4_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8500086550112516,
+      "fold": 5,
+      "params": {
+       "dropout": 0.3380184030632595,
+       "epochs": 60,
+       "filters": 32,
+       "kernel_size": 5,
+       "lr": 0.003227976264728856,
+       "n_layers": 3,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_CNN_AE_fold5_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8755310110450298,
+      "fold": 6,
+      "params": {
+       "dropout": 0.38634205904739144,
+       "epochs": 90,
+       "filters": 16,
+       "kernel_size": 5,
+       "lr": 0.00010520404455075266,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_CNN_AE_fold6_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8496432212028542,
+      "fold": 7,
+      "params": {
+       "dropout": 0.07507782087033141,
+       "epochs": 90,
+       "filters": 64,
+       "kernel_size": 5,
+       "lr": 0.0035135682775153144,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_CNN_AE_fold7_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8683903252710592,
+      "fold": 8,
+      "params": {
+       "dropout": 0.10104390358943935,
+       "epochs": 40,
+       "filters": 16,
+       "kernel_size": 3,
+       "lr": 0.00023087961583012837,
+       "n_layers": 4,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_CNN_AE_fold8_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8057011795543908,
+      "fold": 9,
+      "params": {
+       "dropout": 0.0973855601753129,
+       "epochs": 70,
+       "filters": 32,
+       "kernel_size": 5,
+       "lr": 0.0002547929305597804,
+       "n_layers": 4,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_CNN_AE_fold9_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8868309260832625,
+      "fold": 10,
+      "params": {
+       "dropout": 0.416860197261736,
+       "epochs": 30,
+       "filters": 64,
+       "kernel_size": 5,
+       "lr": 0.004591186104024346,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_CNN_AE_fold10_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     }
+    ]
+   },
+   "DAGMM": {
+    "consensus": {
+     "dropout": 0.19368345186616803,
+     "epochs": 60,
+     "hidden_dim": 128,
+     "lambda_cov_diag": 0.0021193907552939954,
+     "lambda_energy": 0.24254826489761003,
+     "latent_dim": 16,
+     "lr": 0.0011273230188353015,
+     "n_gmm": 4,
+     "n_layers": 2,
+     "seq_length": 6
+    },
+    "distributions": {
+     "dropout": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.0, \"high\": 0.5, \"log\": false}}",
+     "epochs": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 10, \"low\": 30, \"high\": 100}}",
+     "hidden_dim": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [32, 64, 128]}}",
+     "lambda_cov_diag": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.001, \"high\": 0.01, \"log\": true}}",
+     "lambda_energy": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.05, \"high\": 0.5, \"log\": true}}",
+     "latent_dim": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [4, 8, 16]}}",
+     "lr": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.0001, \"high\": 0.01, \"log\": true}}",
+     "n_gmm": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [2, 4, 8]}}",
+     "n_layers": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 1, \"low\": 1, \"high\": 2}}",
+     "seq_length": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 1, \"low\": 5, \"high\": 11}}"
+    },
+    "optuna_db_sha256": {
+     "1": "ed4e0afc15912688fdbba2cdadf4203af919c471fe7b15c2ccfba4164b9db34b",
+     "10": "000887b31e0b834b3d5a3a4466440e7715e2d11b6c13d9fb64f0c381644673b8",
+     "2": "e23604a5d7e2cecc83ff21b2c04e40b8976d07bef1349d5386e9b4dacfa3edfe",
+     "3": "94ed65a5017c5c3cc53e0b3b9beb70e9b443497dd63ff5f98f655a96e24d122c",
+     "4": "36c96efcc9e6e69eff99fd3ef6bff3d8932577b3e3c9d8ca9317558815d03078",
+     "5": "2f01dc4fa781353ad966fe7277b9f601f60f3701baa8c0d90a20f4e71fec8341",
+     "6": "3e779938fb9399b325deca14d498a43de63a9a08719ce2c11cc803e4a8e79b2a",
+     "7": "187dcc51c452c50946bb7ad647fa0260699ce4a876b52406d6bc35ad38d7ef2a",
+     "8": "f386cd015f351546be2efa421f41c28840ac4f5138c21e9edc07cf97c9c2f026",
+     "9": "2afbc580b183e54d45871b764a46c8614b2c0d1810e57cd4293d59fee42f814b"
+    },
+    "ties": [
+     {
+      "median": 65.0,
+      "param": "epochs",
+      "picked": 60,
+      "rule": "halfway, lower grid point"
+     }
+    ],
+    "winners": [
+     {
+      "best_value": 0.886875866851595,
+      "fold": 1,
+      "params": {
+       "dropout": 0.1837921865395768,
+       "epochs": 70,
+       "hidden_dim": 128,
+       "lambda_cov_diag": 0.0013229826833219317,
+       "lambda_energy": 0.2729143960615252,
+       "latent_dim": 16,
+       "lr": 0.0020204618732724126,
+       "n_gmm": 8,
+       "n_layers": 2,
+       "seq_length": 6
+      },
+      "study": "ec-a_w30_DAGMM_fold1_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.9034519956850053,
+      "fold": 2,
+      "params": {
+       "dropout": 0.38223381754683833,
+       "epochs": 80,
+       "hidden_dim": 128,
+       "lambda_cov_diag": 0.002483362736034286,
+       "lambda_energy": 0.41968389220688745,
+       "latent_dim": 8,
+       "lr": 0.002313853296651519,
+       "n_gmm": 4,
+       "n_layers": 1,
+       "seq_length": 6
+      },
+      "study": "ec-a_w30_DAGMM_fold2_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8630148840429215,
+      "fold": 3,
+      "params": {
+       "dropout": 0.16623012622855202,
+       "epochs": 40,
+       "hidden_dim": 128,
+       "lambda_cov_diag": 0.0019962498882199592,
+       "lambda_energy": 0.17815598792165607,
+       "latent_dim": 16,
+       "lr": 0.0006289934027498428,
+       "n_gmm": 4,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_DAGMM_fold3_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8426997245179063,
+      "fold": 4,
+      "params": {
+       "dropout": 0.27277080851100854,
+       "epochs": 50,
+       "hidden_dim": 32,
+       "lambda_cov_diag": 0.0021551649813154592,
+       "lambda_energy": 0.3906335616658904,
+       "latent_dim": 4,
+       "lr": 0.00018594665572864834,
+       "n_gmm": 4,
+       "n_layers": 2,
+       "seq_length": 7
+      },
+      "study": "ec-a_w30_DAGMM_fold4_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.9027176735329756,
+      "fold": 5,
+      "params": {
+       "dropout": 0.45349223056103255,
+       "epochs": 100,
+       "hidden_dim": 64,
+       "lambda_cov_diag": 0.0024713476810656774,
+       "lambda_energy": 0.057404490085187394,
+       "latent_dim": 4,
+       "lr": 0.00010434146180126773,
+       "n_gmm": 2,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_DAGMM_fold5_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8943500424808837,
+      "fold": 6,
+      "params": {
+       "dropout": 0.2035747171927593,
+       "epochs": 50,
+       "hidden_dim": 64,
+       "lambda_cov_diag": 0.0020842103563152546,
+       "lambda_energy": 0.1717874989913591,
+       "latent_dim": 16,
+       "lr": 0.005789655310082962,
+       "n_gmm": 2,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_DAGMM_fold6_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8523809523809524,
+      "fold": 7,
+      "params": {
+       "dropout": 0.007175549077744493,
+       "epochs": 30,
+       "hidden_dim": 32,
+       "lambda_cov_diag": 0.0011549230018395988,
+       "lambda_energy": 0.21556085590874727,
+       "latent_dim": 16,
+       "lr": 0.00010331545062040722,
+       "n_gmm": 4,
+       "n_layers": 1,
+       "seq_length": 6
+      },
+      "study": "ec-a_w30_DAGMM_fold7_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8628192032686415,
+      "fold": 8,
+      "params": {
+       "dropout": 0.04017340436995318,
+       "epochs": 80,
+       "hidden_dim": 128,
+       "lambda_cov_diag": 0.003745446721188181,
+       "lambda_energy": 0.12329224413908772,
+       "latent_dim": 8,
+       "lr": 0.00013782722347930083,
+       "n_gmm": 4,
+       "n_layers": 1,
+       "seq_length": 10
+      },
+      "study": "ec-a_w30_DAGMM_fold8_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8865498034076015,
+      "fold": 9,
+      "params": {
+       "dropout": 0.04847123280350457,
+       "epochs": 70,
+       "hidden_dim": 128,
+       "lambda_cov_diag": 0.001819737886485647,
+       "lambda_energy": 0.3758523300944117,
+       "latent_dim": 8,
+       "lr": 0.009079119057068642,
+       "n_gmm": 8,
+       "n_layers": 1,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_DAGMM_fold9_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.862621359223301,
+      "fold": 10,
+      "params": {
+       "dropout": 0.4170166183294085,
+       "epochs": 60,
+       "hidden_dim": 64,
+       "lambda_cov_diag": 0.00485468928571679,
+       "lambda_energy": 0.44383171041582475,
+       "latent_dim": 4,
+       "lr": 0.00982583186103517,
+       "n_gmm": 4,
+       "n_layers": 2,
+       "seq_length": 6
+      },
+      "study": "ec-a_w30_DAGMM_fold10_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     }
+    ]
+   },
+   "DeepSVDD": {
+    "consensus": {
+     "dropout": 0.1933083804615497,
+     "finetune_epochs": 30,
+     "hidden_dim": 128,
+     "latent_dim": 32,
+     "lr": 0.0014592676222638784,
+     "n_layers": 2,
+     "pretrain_epochs": 40,
+     "seq_length": 6
+    },
+    "distributions": {
+     "dropout": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.0, \"high\": 0.5, \"log\": false}}",
+     "finetune_epochs": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 10, \"low\": 20, \"high\": 60}}",
+     "hidden_dim": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [32, 64, 128]}}",
+     "latent_dim": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [8, 16, 32]}}",
+     "lr": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.0001, \"high\": 0.01, \"log\": true}}",
+     "n_layers": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 1, \"low\": 1, \"high\": 2}}",
+     "pretrain_epochs": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 10, \"low\": 20, \"high\": 60}}",
+     "seq_length": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 1, \"low\": 5, \"high\": 11}}"
+    },
+    "optuna_db_sha256": {
+     "1": "5e1dd8e818895515ea87cc8ba631cfc99bdea8b28fe30971d174283083d35f10",
+     "10": "bdece8cefa824fc5b887f048e2d8e267311d7025327a2fdfd1741138a9d22791",
+     "2": "699c5c2d7aa2d7f5bfa69633077d9f1eb785731a1e55e09ef0a5290230dd9942",
+     "3": "13184897a948d2a8aae25d1bf8a8a6d4d9b33db50056beeec2264a27c0964d31",
+     "4": "493357419e29906a6c3b3b91b8fdbed8b820d98c634d14fae93f1c6b769dc8f8",
+     "5": "82d1d45493d360be8502fb2206b5de80dfe1cdc5244a59cc4fcc20a009c464dd",
+     "6": "726fcaf3be07b1a67651e9f3a8416814e36703e7bb4714a782dafdc3d608d316",
+     "7": "986242b14102597d8016d8a43c17985cd049d372ac41f1bfab7782bafee3b718",
+     "8": "b353cc85bb3e220355aa7f1065923cb5dbd7e90c87594f397b84966a2929010c",
+     "9": "a577368c8edd57c093d4d112233c83ed0486ecd7e1a49d80aa095dd0528913ca"
+    },
+    "ties": [
+     {
+      "median": 45.0,
+      "param": "pretrain_epochs",
+      "picked": 40,
+      "rule": "halfway, lower grid point"
+     }
+    ],
+    "winners": [
+     {
+      "best_value": 0.8555574098798397,
+      "fold": 1,
+      "params": {
+       "dropout": 0.48117341128102714,
+       "finetune_epochs": 20,
+       "hidden_dim": 32,
+       "latent_dim": 32,
+       "lr": 0.0003153372225865448,
+       "n_layers": 1,
+       "pretrain_epochs": 50,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_DeepSVDD_fold1_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8830906148867314,
+      "fold": 2,
+      "params": {
+       "dropout": 0.3007539968967635,
+       "finetune_epochs": 30,
+       "hidden_dim": 128,
+       "latent_dim": 32,
+       "lr": 0.00010388927450145527,
+       "n_layers": 1,
+       "pretrain_epochs": 60,
+       "seq_length": 6
+      },
+      "study": "ec-a_w30_DeepSVDD_fold2_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.779126213592233,
+      "fold": 3,
+      "params": {
+       "dropout": 0.06757425514855449,
+       "finetune_epochs": 50,
+       "hidden_dim": 128,
+       "latent_dim": 16,
+       "lr": 0.002375787567893976,
+       "n_layers": 2,
+       "pretrain_epochs": 60,
+       "seq_length": 6
+      },
+      "study": "ec-a_w30_DeepSVDD_fold3_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8412180052956753,
+      "fold": 4,
+      "params": {
+       "dropout": 0.05539863141318829,
+       "finetune_epochs": 30,
+       "hidden_dim": 128,
+       "latent_dim": 8,
+       "lr": 0.004289778958399521,
+       "n_layers": 2,
+       "pretrain_epochs": 20,
+       "seq_length": 6
+      },
+      "study": "ec-a_w30_DeepSVDD_fold4_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8724079955165328,
+      "fold": 5,
+      "params": {
+       "dropout": 0.1278121885795106,
+       "finetune_epochs": 50,
+       "hidden_dim": 128,
+       "latent_dim": 8,
+       "lr": 0.002855938266772973,
+       "n_layers": 2,
+       "pretrain_epochs": 20,
+       "seq_length": 7
+      },
+      "study": "ec-a_w30_DeepSVDD_fold5_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8192863211554801,
+      "fold": 6,
+      "params": {
+       "dropout": 0.16608658630727102,
+       "finetune_epochs": 40,
+       "hidden_dim": 128,
+       "latent_dim": 32,
+       "lr": 0.0021744625071845477,
+       "n_layers": 2,
+       "pretrain_epochs": 40,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_DeepSVDD_fold6_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8702821869488536,
+      "fold": 7,
+      "params": {
+       "dropout": 0.3696238145883144,
+       "finetune_epochs": 20,
+       "hidden_dim": 128,
+       "latent_dim": 32,
+       "lr": 0.0005327049964525704,
+       "n_layers": 2,
+       "pretrain_epochs": 20,
+       "seq_length": 6
+      },
+      "study": "ec-a_w30_DeepSVDD_fold7_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.7414467253176931,
+      "fold": 8,
+      "params": {
+       "dropout": 0.22053017461582833,
+       "finetune_epochs": 20,
+       "hidden_dim": 128,
+       "latent_dim": 32,
+       "lr": 0.008776107674930752,
+       "n_layers": 2,
+       "pretrain_epochs": 50,
+       "seq_length": 9
+      },
+      "study": "ec-a_w30_DeepSVDD_fold8_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8405963302752294,
+      "fold": 9,
+      "params": {
+       "dropout": 0.03750391766177802,
+       "finetune_epochs": 30,
+       "hidden_dim": 128,
+       "latent_dim": 32,
+       "lr": 0.00010111861893302601,
+       "n_layers": 1,
+       "pretrain_epochs": 30,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_DeepSVDD_fold9_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8595157179269328,
+      "fold": 10,
+      "params": {
+       "dropout": 0.3200128124654189,
+       "finetune_epochs": 50,
+       "hidden_dim": 128,
+       "latent_dim": 32,
+       "lr": 0.000979304994384503,
+       "n_layers": 2,
+       "pretrain_epochs": 50,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_DeepSVDD_fold10_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     }
+    ]
+   },
+   "IF": {
+    "consensus": {
+     "contamination": 0.06727716313090104,
+     "max_features": 0.6979423373760234,
+     "max_samples": 0.7873554640837113,
+     "n_estimators": 200
+    },
+    "distributions": {
+     "contamination": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.01, \"high\": 0.15, \"log\": false}}",
+     "max_features": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.5, \"high\": 1.0, \"log\": false}}",
+     "max_samples": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.5, \"high\": 1.0, \"log\": false}}",
+     "n_estimators": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 50, \"low\": 50, \"high\": 500}}"
+    },
+    "optuna_db_sha256": {
+     "1": "b84bb38f7529c7001fe2946ac747c371a1cd3584a92f02f9681dff6e72e61991",
+     "10": "18a7dbdce981e170308d468af5ba2161d7789fb95afa58bd461709fad52b337f",
+     "2": "5b3f4b810ba2c976a6d94f0cbb42fcec1af85405c9cf4aa3101970c53c583bf9",
+     "3": "51127bf03527770bd6b74bcfab1d8eecc531ea02a3a047d4f6d385ba6355845b",
+     "4": "756b76bf8309d1a8e0a9ea6719aff946cf2eb2150cbdee72992f9f202d8703cb",
+     "5": "d0361af5ad354f5b6c9ffa9c059558623b685505143ad72403e5326c2a763ee8",
+     "6": "e98f14ebcb8a17f370568b2d1b13be50d41cbdf06bb6c83e6d0dd6a49444f6df",
+     "7": "908127fccba4cf9d13832fd9b8644bebb50d15d371e206e2f269015027ff874d",
+     "8": "a85a190c6ccd015af760b215759e7faf42b4c8566e166ddf075863497af29571",
+     "9": "8045902df91b56bb45fda71ed4c176f991593eeb7cb8006437c7fec612e9842e"
+    },
+    "ties": [],
+    "winners": [
+     {
+      "best_value": 0.8781213704994192,
+      "fold": 1,
+      "params": {
+       "contamination": 0.07360382893783413,
+       "max_features": 0.5393512078385126,
+       "max_samples": 0.9953423349731276,
+       "n_estimators": 50
+      },
+      "study": "ec-a_w30_IF_fold1_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.9053748870822041,
+      "fold": 2,
+      "params": {
+       "contamination": 0.07666096874861783,
+       "max_features": 0.9370938123842676,
+       "max_samples": 0.7702300872580123,
+       "n_estimators": 150
+      },
+      "study": "ec-a_w30_IF_fold2_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8928033724781692,
+      "fold": 3,
+      "params": {
+       "contamination": 0.06095049732396795,
+       "max_features": 0.7061695985994998,
+       "max_samples": 0.685956876196129,
+       "n_estimators": 500
+      },
+      "study": "ec-a_w30_IF_fold3_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.9144124168514411,
+      "fold": 4,
+      "params": {
+       "contamination": 0.14724709130300603,
+       "max_features": 0.6252660336183118,
+       "max_samples": 0.5001378589471183,
+       "n_estimators": 100
+      },
+      "study": "ec-a_w30_IF_fold4_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.9005283018867924,
+      "fold": 5,
+      "params": {
+       "contamination": 0.1126339115536682,
+       "max_features": 0.6748055261487421,
+       "max_samples": 0.8044808409094102,
+       "n_estimators": 500
+      },
+      "study": "ec-a_w30_IF_fold5_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.918551367331855,
+      "fold": 6,
+      "params": {
+       "contamination": 0.0401170996615912,
+       "max_features": 0.7993481802271993,
+       "max_samples": 0.9776513524541149,
+       "n_estimators": 500
+      },
+      "study": "ec-a_w30_IF_fold6_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.9128888888888889,
+      "fold": 7,
+      "params": {
+       "contamination": 0.018038666234236608,
+       "max_features": 0.5406983821210398,
+       "max_samples": 0.8757977481685391,
+       "n_estimators": 100
+      },
+      "study": "ec-a_w30_IF_fold7_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8980363636363636,
+      "fold": 8,
+      "params": {
+       "contamination": 0.05936067446824596,
+       "max_features": 0.689715076152547,
+       "max_samples": 0.7208631644888623,
+       "n_estimators": 350
+      },
+      "study": "ec-a_w30_IF_fold8_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8717142857142858,
+      "fold": 9,
+      "params": {
+       "contamination": 0.029752702089938937,
+       "max_features": 0.7853400271596518,
+       "max_samples": 0.7669613756215685,
+       "n_estimators": 150
+      },
+      "study": "ec-a_w30_IF_fold9_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.9269031781226904,
+      "fold": 10,
+      "params": {
+       "contamination": 0.10043089919711592,
+       "max_features": 0.9610692935535572,
+       "max_samples": 0.9193376165791679,
+       "n_estimators": 250
+      },
+      "study": "ec-a_w30_IF_fold10_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     }
+    ]
+   },
+   "LSTM_AE": {
+    "consensus": {
+     "dropout": 0.33158783994559604,
+     "epochs": 70,
+     "hidden_dim": 128,
+     "lr": 0.0007841187598189392,
+     "n_layers": 2,
+     "seq_length": 5
+    },
+    "distributions": {
+     "dropout": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.0, \"high\": 0.5, \"log\": false}}",
+     "epochs": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 10, \"low\": 30, \"high\": 100}}",
+     "hidden_dim": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [32, 64, 128]}}",
+     "lr": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.0001, \"high\": 0.01, \"log\": true}}",
+     "n_layers": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 1, \"low\": 1, \"high\": 2}}",
+     "seq_length": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 1, \"low\": 5, \"high\": 11}}"
+    },
+    "optuna_db_sha256": {
+     "1": "3e482343734f8c1c0ec1333a6c991cf7ed9461a4b67fc060b5328278d28b2976",
+     "10": "1b76566ed7d5443c91c6bf5dd7990e94a26ae3229f304e1e118b84693cbd73d3",
+     "2": "7474bd20aef7cb31a4e438a57dcf2e96debbe86b46e8edd1e23ba5a2c32a1ca5",
+     "3": "a082dd72a410b6e579f133c0c4d103e681eb19aadbc378e8c020fef66ab21153",
+     "4": "78407fb4fea8498fb5230f35c52bbbe98af38e3370af53a2c100478dc246b8be",
+     "5": "2163af33e891cfdb4aa49991a73e356567d5ae41ecfb768f60c6e0b7c74ef92d",
+     "6": "21befc1940cc1e47d2161a085f2b068c93feaf8eaaed006afaa60f9d45189e13",
+     "7": "0fd757f94bc13d273fe0c0fd60d52499084d2fc066475919f83701cbf3778337",
+     "8": "a7f6285d36c1ca5628b5a3b5f5d01a2bd7a73b2a186bb028e4d1ad1748f2e882",
+     "9": "1cbbf42f9a43a1c7b12b1693f1147dcc5d2773038e96a2099fdd771dcec71a77"
+    },
+    "ties": [],
+    "winners": [
+     {
+      "best_value": 0.8437082777036048,
+      "fold": 1,
+      "params": {
+       "dropout": 0.11647812251245547,
+       "epochs": 50,
+       "hidden_dim": 32,
+       "lr": 0.00011283971866169738,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_LSTM_AE_fold1_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8535392869505019,
+      "fold": 2,
+      "params": {
+       "dropout": 0.13924509068280447,
+       "epochs": 70,
+       "hidden_dim": 128,
+       "lr": 0.003605467151007729,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_LSTM_AE_fold2_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8325977847005884,
+      "fold": 3,
+      "params": {
+       "dropout": 0.46276913691564686,
+       "epochs": 70,
+       "hidden_dim": 128,
+       "lr": 0.008102872586171487,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_LSTM_AE_fold3_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.859090909090909,
+      "fold": 4,
+      "params": {
+       "dropout": 0.38095824564398045,
+       "epochs": 80,
+       "hidden_dim": 128,
+       "lr": 0.0035895887975792074,
+       "n_layers": 1,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_LSTM_AE_fold4_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8567162887311753,
+      "fold": 5,
+      "params": {
+       "dropout": 0.48290124250717736,
+       "epochs": 70,
+       "hidden_dim": 32,
+       "lr": 0.008683310594382217,
+       "n_layers": 1,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_LSTM_AE_fold5_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8755310110450298,
+      "fold": 6,
+      "params": {
+       "dropout": 0.4066539825938792,
+       "epochs": 40,
+       "hidden_dim": 32,
+       "lr": 0.00010931159589650714,
+       "n_layers": 1,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_LSTM_AE_fold6_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8490485898742779,
+      "fold": 7,
+      "params": {
+       "dropout": 0.377601399740596,
+       "epochs": 90,
+       "hidden_dim": 128,
+       "lr": 0.0009718409478487022,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_LSTM_AE_fold7_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8750208507089241,
+      "fold": 8,
+      "params": {
+       "dropout": 0.17569033972504497,
+       "epochs": 80,
+       "hidden_dim": 128,
+       "lr": 0.0006326572582283402,
+       "n_layers": 1,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_LSTM_AE_fold8_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8063564875491481,
+      "fold": 9,
+      "params": {
+       "dropout": 0.2855742801505961,
+       "epochs": 70,
+       "hidden_dim": 128,
+       "lr": 0.000270795458367716,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_LSTM_AE_fold9_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8858963466440102,
+      "fold": 10,
+      "params": {
+       "dropout": 0.050083850809258174,
+       "epochs": 70,
+       "hidden_dim": 32,
+       "lr": 0.00022534650643136133,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_LSTM_AE_fold10_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     }
+    ]
+   },
+   "LSTM_VAE": {
+    "consensus": {
+     "beta": 0.024844494230039427,
+     "dropout": 0.27766536690611104,
+     "epochs": 30,
+     "hidden_dim": 32,
+     "latent_dim": 32,
+     "lr": 0.0029495314441731865,
+     "n_layers": 1,
+     "seq_length": 5
+    },
+    "distributions": {
+     "beta": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.01, \"high\": 0.5, \"log\": true}}",
+     "dropout": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.0, \"high\": 0.5, \"log\": false}}",
+     "epochs": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 10, \"low\": 30, \"high\": 100}}",
+     "hidden_dim": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [32, 64, 128]}}",
+     "latent_dim": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [16, 32, 64]}}",
+     "lr": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.0001, \"high\": 0.01, \"log\": true}}",
+     "n_layers": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 1, \"low\": 1, \"high\": 2}}",
+     "seq_length": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 1, \"low\": 5, \"high\": 11}}"
+    },
+    "optuna_db_sha256": {
+     "1": "14de33892d3fdc212b98a641ae5f20408da9774eacc7ff51e5798d3c981e601a",
+     "10": "e655633a2995e7df1a078bd0972cd9d189d05d0bcf24c2c2b4e18e1f61cbf84a",
+     "2": "a389f15644950e37f7feb65cb0de6f67a4ad5e1ec642135f0d9ed34ab1f8ec36",
+     "3": "d4b60f8b0ded6754dbda356c9cea8573032d421185a2e60f2defd671a8216f33",
+     "4": "0a21e1f9f630b269881b81e698f39345af01294ecb3f91bc18872d31329e36fd",
+     "5": "3b94ae5e2fc7c748a514f27adc792dfd7e0f8f0ea06042896196b3c120bad12d",
+     "6": "1f5cb6f0994819d5774665f6e3599c9eb4c78db73a1ebad4af55b8091638a367",
+     "7": "3302bfdb812f7dd8443803e91cabac11d6ed1be7f5b95fa6cb82e8cc1f295739",
+     "8": "9d15cda0086ce1c090d4651497c90dfd1bbdd34237d831730198d3139f9fd4d4",
+     "9": "60202e05262c8903b9f2ce74cc528939675506cae2a950a691b8b472d536f373"
+    },
+    "ties": [],
+    "winners": [
+     {
+      "best_value": 0.8482977303070761,
+      "fold": 1,
+      "params": {
+       "beta": 0.02613852868288991,
+       "dropout": 0.08647672595348538,
+       "epochs": 30,
+       "hidden_dim": 32,
+       "latent_dim": 32,
+       "lr": 0.0007336348358569119,
+       "n_layers": 1,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_LSTM_VAE_fold1_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8419435790931118,
+      "fold": 2,
+      "params": {
+       "beta": 0.03278278806907668,
+       "dropout": 0.4228652117544294,
+       "epochs": 30,
+       "hidden_dim": 32,
+       "latent_dim": 32,
+       "lr": 0.0001355106898660338,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_LSTM_VAE_fold2_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8451021114572517,
+      "fold": 3,
+      "params": {
+       "beta": 0.08167255649164763,
+       "dropout": 0.436266548413302,
+       "epochs": 30,
+       "hidden_dim": 64,
+       "latent_dim": 64,
+       "lr": 0.009431682041483643,
+       "n_layers": 1,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_LSTM_VAE_fold3_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.84910790144435,
+      "fold": 4,
+      "params": {
+       "beta": 0.016015314620351995,
+       "dropout": 0.26733628039901836,
+       "epochs": 30,
+       "hidden_dim": 128,
+       "latent_dim": 32,
+       "lr": 0.005309279032425051,
+       "n_layers": 1,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_LSTM_VAE_fold4_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8469361260169638,
+      "fold": 5,
+      "params": {
+       "beta": 0.023614523259318305,
+       "dropout": 0.0922058324409167,
+       "epochs": 100,
+       "hidden_dim": 32,
+       "latent_dim": 32,
+       "lr": 0.005154637833053905,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_LSTM_VAE_fold5_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8758708581138488,
+      "fold": 6,
+      "params": {
+       "beta": 0.02237150416306911,
+       "dropout": 0.1543448678351986,
+       "epochs": 30,
+       "hidden_dim": 32,
+       "latent_dim": 16,
+       "lr": 0.0003816522475235691,
+       "n_layers": 1,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_LSTM_VAE_fold6_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8527437988447162,
+      "fold": 7,
+      "params": {
+       "beta": 0.014198250309033784,
+       "dropout": 0.16656843093548934,
+       "epochs": 80,
+       "hidden_dim": 64,
+       "latent_dim": 64,
+       "lr": 0.007079211457829919,
+       "n_layers": 1,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_LSTM_VAE_fold7_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8686405337781484,
+      "fold": 8,
+      "params": {
+       "beta": 0.012008601155859135,
+       "dropout": 0.28799445341320373,
+       "epochs": 30,
+       "hidden_dim": 128,
+       "latent_dim": 16,
+       "lr": 0.004655833707481644,
+       "n_layers": 1,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_LSTM_VAE_fold8_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8071756225425951,
+      "fold": 9,
+      "params": {
+       "beta": 0.05769780946284572,
+       "dropout": 0.49907375284428457,
+       "epochs": 60,
+       "hidden_dim": 32,
+       "latent_dim": 16,
+       "lr": 0.001442795516773823,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_LSTM_VAE_fold9_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8879354290569244,
+      "fold": 10,
+      "params": {
+       "beta": 0.03184331244496697,
+       "dropout": 0.309393625053567,
+       "epochs": 60,
+       "hidden_dim": 32,
+       "latent_dim": 32,
+       "lr": 0.0018685666814487855,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_LSTM_VAE_fold10_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     }
+    ]
+   },
+   "OC_SVM": {
+    "consensus": {
+     "gamma": "scale",
+     "kernel": "rbf",
+     "nu": 0.054310689395625125
+    },
+    "distributions": {
+     "gamma": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [\"scale\", \"auto\"]}}",
+     "kernel": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [\"rbf\", \"poly\", \"sigmoid\"]}}",
+     "nu": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.01, \"high\": 0.2, \"log\": false}}"
+    },
+    "optuna_db_sha256": {
+     "1": "f54ebf1f82ce409ba4b19b1502505ce70cd2c770dea3ac7f7f906566b50bb7e7",
+     "10": "2757c8ca1347be5796d11bdf3582f10c20bef6cc5fc873470514d7b9dea35e7f",
+     "2": "e3ec2b5d731c54b4afbf50cbf562de2f617ffe019360f715466d38d120c5953d",
+     "3": "4255b1f4be81aab8d1e6eb45d9a5d3bff5080bee8571a7f67e191ac8e4999ece",
+     "4": "9c249c129f200f32d171c822041ea4b72c599dd2598f90af87c92dd3e321ce28",
+     "5": "83900ff227c5510d21498823f3b3d017e40309cd5d4aad5f23845759492b6975",
+     "6": "ebb224053adfd73914b1345d1c046b301bec2c53c025c93f507aab3fcea79610",
+     "7": "8fdf600e350b2a6ab409bda7dff7a87048c859fcd616a7653f38ae5bc4b77166",
+     "8": "505de52ba6c513fa6f467e24f47daa40ffcba358523d83788ed4915fa2527fc7",
+     "9": "16eac86f19849481e574b3893d7d18dbd610ae6a63eaf55a53e47e35c09fb7d5"
+    },
+    "ties": [],
+    "winners": [
+     {
+      "best_value": 0.8985554587688733,
+      "fold": 1,
+      "params": {
+       "gamma": "auto",
+       "kernel": "rbf",
+       "nu": 0.020196527090967736
+      },
+      "study": "ec-a_w30_OC_SVM_fold1_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.9010840108401084,
+      "fold": 2,
+      "params": {
+       "gamma": "scale",
+       "kernel": "rbf",
+       "nu": 0.19550868405120098
+      },
+      "study": "ec-a_w30_OC_SVM_fold2_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8860659439927733,
+      "fold": 3,
+      "params": {
+       "gamma": "scale",
+       "kernel": "rbf",
+       "nu": 0.0336897586058711
+      },
+      "study": "ec-a_w30_OC_SVM_fold3_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.9076866223207687,
+      "fold": 4,
+      "params": {
+       "gamma": "auto",
+       "kernel": "rbf",
+       "nu": 0.04051336517042627
+      },
+      "study": "ec-a_w30_OC_SVM_fold4_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8989056603773584,
+      "fold": 5,
+      "params": {
+       "gamma": "auto",
+       "kernel": "rbf",
+       "nu": 0.1393831841308974
+      },
+      "study": "ec-a_w30_OC_SVM_fold5_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.9309312638580932,
+      "fold": 6,
+      "params": {
+       "gamma": "scale",
+       "kernel": "rbf",
+       "nu": 0.19575864778815527
+      },
+      "study": "ec-a_w30_OC_SVM_fold6_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.9005925925925925,
+      "fold": 7,
+      "params": {
+       "gamma": "scale",
+       "kernel": "rbf",
+       "nu": 0.11406638352906323
+      },
+      "study": "ec-a_w30_OC_SVM_fold7_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.9109090909090909,
+      "fold": 8,
+      "params": {
+       "gamma": "scale",
+       "kernel": "rbf",
+       "nu": 0.03550447575111037
+      },
+      "study": "ec-a_w30_OC_SVM_fold8_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8835714285714287,
+      "fold": 9,
+      "params": {
+       "gamma": "auto",
+       "kernel": "rbf",
+       "nu": 0.012264298491473686
+      },
+      "study": "ec-a_w30_OC_SVM_fold9_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.9450110864745012,
+      "fold": 10,
+      "params": {
+       "gamma": "scale",
+       "kernel": "rbf",
+       "nu": 0.06810801362082397
+      },
+      "study": "ec-a_w30_OC_SVM_fold10_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     }
+    ]
+   },
+   "RF": {
+    "consensus": {
+     "max_depth": 20,
+     "max_features": "sqrt",
+     "min_samples_leaf": 1,
+     "n_estimators": 50
+    },
+    "distributions": {
+     "max_depth": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 1, \"low\": 5, \"high\": 30}}",
+     "max_features": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [\"sqrt\", \"log2\"]}}",
+     "min_samples_leaf": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 1, \"low\": 1, \"high\": 20}}",
+     "n_estimators": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 50, \"low\": 50, \"high\": 500}}"
+    },
+    "optuna_db_sha256": {
+     "1": "8907f850f98aaea827cb890f5d3d63a431d7ce59c406659dc98744d4db4c0b96",
+     "10": "238f129faea12bda44c085808194edfe4f5e8ad2a3fc222dc92532d7981e7a95",
+     "2": "94dd499c290cecb680867fdbc1ead4b9b6f44296e4fbbcb260c52986b42b1fba",
+     "3": "0d8ca6623c3c3c65a77b56fafc8b31994bb98133aebc9b9fb6701872aebe6230",
+     "4": "1251d6b4b2bb2c095cf9ee7efd6e43491e72f1a4032f610d95f709d9a2d3d6ac",
+     "5": "287d688da60e676e166bbcca67dbe04afad53e80dc101976327eaf93c8c42863",
+     "6": "16d4380bce516f16ab976933cf77354279c4f17bbe255c9b66eea7a2cc8abcef",
+     "7": "b0b65fc0cd6465d334c49ba0fa15b3c93251308a63be5dccc28660d87452bca6",
+     "8": "78d38a32d4237fcc5395accc55c3423d586a6032596bb5175dcddd0202804b3e",
+     "9": "372bc6026950f6550bf3e534e450e34c7ec59daea5803b39a1b4ce7185e91dc5"
+    },
+    "ties": [
+     {
+      "median": 1.5,
+      "param": "min_samples_leaf",
+      "picked": 1,
+      "rule": "halfway, lower grid point"
+     }
+    ],
+    "winners": [
+     {
+      "best_value": 0.9264300232288036,
+      "fold": 1,
+      "params": {
+       "max_depth": 25,
+       "max_features": "sqrt",
+       "min_samples_leaf": 1,
+       "n_estimators": 50
+      },
+      "study": "ec-a_w30_RF_fold1_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 50
+     },
+     {
+      "best_value": 0.9555103884372177,
+      "fold": 2,
+      "params": {
+       "max_depth": 27,
+       "max_features": "log2",
+       "min_samples_leaf": 10,
+       "n_estimators": 500
+      },
+      "study": "ec-a_w30_RF_fold2_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 50
+     },
+     {
+      "best_value": 0.9692487202649804,
+      "fold": 3,
+      "params": {
+       "max_depth": 15,
+       "max_features": "sqrt",
+       "min_samples_leaf": 1,
+       "n_estimators": 50
+      },
+      "study": "ec-a_w30_RF_fold3_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 50
+     },
+     {
+      "best_value": 0.9575018477457502,
+      "fold": 4,
+      "params": {
+       "max_depth": 5,
+       "max_features": "sqrt",
+       "min_samples_leaf": 3,
+       "n_estimators": 500
+      },
+      "study": "ec-a_w30_RF_fold4_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 50
+     },
+     {
+      "best_value": 0.9287924528301885,
+      "fold": 5,
+      "params": {
+       "max_depth": 26,
+       "max_features": "log2",
+       "min_samples_leaf": 1,
+       "n_estimators": 50
+      },
+      "study": "ec-a_w30_RF_fold5_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 50
+     },
+     {
+      "best_value": 0.9542498152254251,
+      "fold": 6,
+      "params": {
+       "max_depth": 28,
+       "max_features": "sqrt",
+       "min_samples_leaf": 7,
+       "n_estimators": 50
+      },
+      "study": "ec-a_w30_RF_fold6_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 50
+     },
+     {
+      "best_value": 0.9444814814814815,
+      "fold": 7,
+      "params": {
+       "max_depth": 13,
+       "max_features": "sqrt",
+       "min_samples_leaf": 1,
+       "n_estimators": 50
+      },
+      "study": "ec-a_w30_RF_fold7_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 50
+     },
+     {
+      "best_value": 0.9192727272727272,
+      "fold": 8,
+      "params": {
+       "max_depth": 5,
+       "max_features": "log2",
+       "min_samples_leaf": 2,
+       "n_estimators": 50
+      },
+      "study": "ec-a_w30_RF_fold8_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 50
+     },
+     {
+      "best_value": 0.8871428571428573,
+      "fold": 9,
+      "params": {
+       "max_depth": 26,
+       "max_features": "log2",
+       "min_samples_leaf": 1,
+       "n_estimators": 250
+      },
+      "study": "ec-a_w30_RF_fold9_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 50
+     },
+     {
+      "best_value": 0.9611973392461197,
+      "fold": 10,
+      "params": {
+       "max_depth": 6,
+       "max_features": "sqrt",
+       "min_samples_leaf": 7,
+       "n_estimators": 300
+      },
+      "study": "ec-a_w30_RF_fold10_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 50
+     }
+    ]
+   },
+   "Trans_AE": {
+    "consensus": {
+     "d_model": 128,
+     "dropout": 0.31527439721712963,
+     "epochs": 50,
+     "lr": 0.0010446845039187838,
+     "n_layers": 2,
+     "nhead": 4,
+     "seq_length": 5
+    },
+    "distributions": {
+     "d_model": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [32, 64, 128]}}",
+     "dropout": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.0, \"high\": 0.5, \"log\": false}}",
+     "epochs": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 10, \"low\": 30, \"high\": 100}}",
+     "lr": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.0001, \"high\": 0.01, \"log\": true}}",
+     "n_layers": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 1, \"low\": 1, \"high\": 3}}",
+     "nhead": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [2, 4, 8]}}",
+     "seq_length": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 1, \"low\": 5, \"high\": 11}}"
+    },
+    "optuna_db_sha256": {
+     "1": "f62af9623752e19a3fd7094d3500e3ae2ddb4cb650a170edd52f5c9af1e5fbbc",
+     "10": "8c838f557bfbd3ec1a4bacb39a5e00a861a4f2ee4f6a6c9771b79617e890a697",
+     "2": "febd4a5991a06a043c7ece709ede2438ffd83a89b63ce3cce9a90c252d0ba333",
+     "3": "d26bfc60a7ea634c082191e23fd9ffadd9aa9607dd70f36747fcb75f07946cc0",
+     "4": "30059ccd59f57907537c0c45a56100feb46dbad7cff2ae28fcd7995a13f79e67",
+     "5": "bcb642a06b1cd4329792f5f531213d64cf21ea19dc9ce9e526b1e8358c1653e0",
+     "6": "8877c144e9320218faed9174fc42b777db7513db6a4457883e6430507ff5550d",
+     "7": "c3fac9b1789ffb5d9382a439b7d2a8ad24f08dab1c80d699fa4960ea573cd82d",
+     "8": "121996466a213bb70c451372ebebe8828f2502295e9473f21bb589b34ce0679f",
+     "9": "45368368d3855d12056c2d6484230592ee4ded311f0d279bf482670c042cca8d"
+    },
+    "ties": [
+     {
+      "median": 55.0,
+      "param": "epochs",
+      "picked": 50,
+      "rule": "halfway, lower grid point"
+     },
+     {
+      "count": 4,
+      "param": "nhead",
+      "picked": 4,
+      "rule": "smallest value",
+      "tied": [
+       4,
+       8
+      ]
+     }
+    ],
+    "winners": [
+     {
+      "best_value": 0.8493825100133511,
+      "fold": 1,
+      "params": {
+       "d_model": 32,
+       "dropout": 0.06982651220319412,
+       "epochs": 40,
+       "lr": 0.00020469472315151176,
+       "n_layers": 1,
+       "nhead": 8,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_Trans_AE_fold1_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8778123918310835,
+      "fold": 2,
+      "params": {
+       "d_model": 128,
+       "dropout": 0.48897981019252273,
+       "epochs": 100,
+       "lr": 0.0012281177242467844,
+       "n_layers": 2,
+       "nhead": 4,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_Trans_AE_fold2_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.827275874004846,
+      "fold": 3,
+      "params": {
+       "d_model": 64,
+       "dropout": 0.3476288854347363,
+       "epochs": 30,
+       "lr": 0.0008032563870072772,
+       "n_layers": 2,
+       "nhead": 8,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_Trans_AE_fold3_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8165675446049278,
+      "fold": 4,
+      "params": {
+       "d_model": 64,
+       "dropout": 0.10119483252280181,
+       "epochs": 60,
+       "lr": 0.001796016191503509,
+       "n_layers": 2,
+       "nhead": 4,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_Trans_AE_fold4_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8429548208412672,
+      "fold": 5,
+      "params": {
+       "d_model": 128,
+       "dropout": 0.2321180709827585,
+       "epochs": 30,
+       "lr": 0.00010200380473115295,
+       "n_layers": 2,
+       "nhead": 4,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_Trans_AE_fold5_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8762107051826679,
+      "fold": 6,
+      "params": {
+       "d_model": 32,
+       "dropout": 0.02012762279533918,
+       "epochs": 70,
+       "lr": 0.0008886491019396211,
+       "n_layers": 2,
+       "nhead": 8,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_Trans_AE_fold6_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8570761128100577,
+      "fold": 7,
+      "params": {
+       "d_model": 128,
+       "dropout": 0.34552268176810946,
+       "epochs": 100,
+       "lr": 0.0002397934962863277,
+       "n_layers": 1,
+       "nhead": 2,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_Trans_AE_fold7_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.880650542118432,
+      "fold": 8,
+      "params": {
+       "d_model": 128,
+       "dropout": 0.4411804602226215,
+       "epochs": 40,
+       "lr": 0.001791339062485258,
+       "n_layers": 2,
+       "nhead": 2,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_Trans_AE_fold8_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8058650065530802,
+      "fold": 9,
+      "params": {
+       "d_model": 32,
+       "dropout": 0.4467235753164236,
+       "epochs": 60,
+       "lr": 0.005084113060455572,
+       "n_layers": 2,
+       "nhead": 4,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_Trans_AE_fold9_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8878504672897196,
+      "fold": 10,
+      "params": {
+       "d_model": 64,
+       "dropout": 0.2850261126661498,
+       "epochs": 50,
+       "lr": 0.009861413712645614,
+       "n_layers": 2,
+       "nhead": 8,
+       "seq_length": 5
+      },
+      "study": "ec-a_w30_Trans_AE_fold10_lofo-none_derived-on_win-d7d49632f229",
+      "trials_completed": 100
+     }
+    ]
+   }
+  },
+  "iot": {
+   "CNN_AE": {
+    "consensus": {
+     "dropout": 0.28073170099709494,
+     "epochs": 60,
+     "filters": 16,
+     "kernel_size": 3,
+     "lr": 0.0008546528535497345,
+     "n_layers": 3,
+     "seq_length": 5
+    },
+    "distributions": {
+     "dropout": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.0, \"high\": 0.5, \"log\": false}}",
+     "epochs": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 10, \"low\": 30, \"high\": 100}}",
+     "filters": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [16, 32, 64, 128]}}",
+     "kernel_size": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [3, 5, 7]}}",
+     "lr": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.0001, \"high\": 0.01, \"log\": true}}",
+     "n_layers": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 1, \"low\": 2, \"high\": 4}}",
+     "seq_length": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 1, \"low\": 5, \"high\": 11}}"
+    },
+    "optuna_db_sha256": {
+     "1": "6c2e0f4b8793cc593f8d24e568a0108411ff8c188775bcf8ec26186f946ec11f",
+     "10": "17ae9056658c34f0d6f8364e513f2907fa493b1d3082a7aeb5cda4b6a9847817",
+     "2": "8db16ff250d21df80eb9b25851662015c15e0e930cf554557863524c1e24fa85",
+     "3": "7cecfc511ac6a7f03ea5f527777fcf6ba084a65ca03333e8e77e70c4cb8fe468",
+     "4": "4f13b5227587f3a369bce9d63056c7905dd76c8a3d3ffaa48ed39682609d3544",
+     "5": "9567405ff502b12bcb46f4f8416d28fd63f72634953b4859e2decc1993c2010d",
+     "6": "661d3d79dc5545e385c0d709642d1e1f69a06d2631dd3123802f24d76bc2cf8e",
+     "7": "8e981361aac883b2ce1772a159368400e3c9f4fbf78890f744c940d131c0048d",
+     "8": "7eff82822c921de47c259a61e304801f689e74930d706676a0f0f3c653ffc3f6",
+     "9": "0749a2487aaf936f72dc469ff6e7e2fae76cdede717f4f4ec4ec045a534a8ae1"
+    },
+    "ties": [
+     {
+      "median": 65.0,
+      "param": "epochs",
+      "picked": 60,
+      "rule": "halfway, lower grid point"
+     },
+     {
+      "count": 3,
+      "param": "filters",
+      "picked": 16,
+      "rule": "smallest value",
+      "tied": [
+       16,
+       32
+      ]
+     },
+     {
+      "median": 3.5,
+      "param": "n_layers",
+      "picked": 3,
+      "rule": "halfway, lower grid point"
+     }
+    ],
+    "winners": [
+     {
+      "best_value": 0.8551769331585845,
+      "fold": 1,
+      "params": {
+       "dropout": 0.4203088968654805,
+       "epochs": 90,
+       "filters": 64,
+       "kernel_size": 7,
+       "lr": 0.00010010667737154592,
+       "n_layers": 4,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_CNN_AE_fold1_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8648457047539616,
+      "fold": 2,
+      "params": {
+       "dropout": 0.17468973269440655,
+       "epochs": 80,
+       "filters": 128,
+       "kernel_size": 3,
+       "lr": 0.00044178697119307524,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_CNN_AE_fold2_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8764710972654898,
+      "fold": 3,
+      "params": {
+       "dropout": 0.18544350910225782,
+       "epochs": 70,
+       "filters": 32,
+       "kernel_size": 3,
+       "lr": 0.002251636386822801,
+       "n_layers": 4,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_CNN_AE_fold3_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8639853137516689,
+      "fold": 4,
+      "params": {
+       "dropout": 0.24959190628289607,
+       "epochs": 40,
+       "filters": 32,
+       "kernel_size": 5,
+       "lr": 0.0007150442849133594,
+       "n_layers": 3,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_CNN_AE_fold4_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8342395921835174,
+      "fold": 5,
+      "params": {
+       "dropout": 0.3546916649448564,
+       "epochs": 50,
+       "filters": 128,
+       "kernel_size": 7,
+       "lr": 0.0010215192478172307,
+       "n_layers": 4,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_CNN_AE_fold5_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8348343245539507,
+      "fold": 6,
+      "params": {
+       "dropout": 0.06546890970029151,
+       "epochs": 40,
+       "filters": 16,
+       "kernel_size": 3,
+       "lr": 0.00013347621162136975,
+       "n_layers": 4,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_CNN_AE_fold6_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8621062651436483,
+      "fold": 7,
+      "params": {
+       "dropout": 0.3118714957112938,
+       "epochs": 60,
+       "filters": 32,
+       "kernel_size": 7,
+       "lr": 0.008656807773866742,
+       "n_layers": 3,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_CNN_AE_fold7_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.7922724125995154,
+      "fold": 8,
+      "params": {
+       "dropout": 0.47228237310582816,
+       "epochs": 60,
+       "filters": 16,
+       "kernel_size": 3,
+       "lr": 0.006082754131559618,
+       "n_layers": 3,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_CNN_AE_fold8_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8277085496711665,
+      "fold": 9,
+      "params": {
+       "dropout": 0.4536966431787758,
+       "epochs": 70,
+       "filters": 16,
+       "kernel_size": 3,
+       "lr": 0.00010953721421437575,
+       "n_layers": 3,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_CNN_AE_fold9_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8603419516263553,
+      "fold": 10,
+      "params": {
+       "dropout": 0.22274043773907443,
+       "epochs": 100,
+       "filters": 64,
+       "kernel_size": 5,
+       "lr": 0.00392805445910243,
+       "n_layers": 4,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_CNN_AE_fold10_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     }
+    ]
+   },
+   "DAGMM": {
+    "consensus": {
+     "dropout": 0.2917125813859235,
+     "epochs": 60,
+     "hidden_dim": 128,
+     "lambda_cov_diag": 0.005715945936510459,
+     "lambda_energy": 0.18768392855002908,
+     "latent_dim": 16,
+     "lr": 0.00029702003789441487,
+     "n_gmm": 2,
+     "n_layers": 1,
+     "seq_length": 5
+    },
+    "distributions": {
+     "dropout": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.0, \"high\": 0.5, \"log\": false}}",
+     "epochs": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 10, \"low\": 30, \"high\": 100}}",
+     "hidden_dim": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [32, 64, 128]}}",
+     "lambda_cov_diag": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.001, \"high\": 0.01, \"log\": true}}",
+     "lambda_energy": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.05, \"high\": 0.5, \"log\": true}}",
+     "latent_dim": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [4, 8, 16]}}",
+     "lr": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.0001, \"high\": 0.01, \"log\": true}}",
+     "n_gmm": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [2, 4, 8]}}",
+     "n_layers": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 1, \"low\": 1, \"high\": 2}}",
+     "seq_length": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 1, \"low\": 5, \"high\": 11}}"
+    },
+    "optuna_db_sha256": {
+     "1": "8aba26c5f113ba7c5466da98109e7bbdcb90ca866f28c200e19334e527d2f1d7",
+     "10": "8634740e3e7ef90184613daadffbf56eb6c4f55a8c8fa398ed1f049676bcbf91",
+     "2": "976d2bf5f7eb16b0d036837b5b8b2198a4027442ccf885df33843063e6c61684",
+     "3": "db394cf3c2f60409e6dec1e0f8e74dc1614d8f0cb2f1ace5906e4c84e098aa0d",
+     "4": "a472fb1fe98d2baf749cfcc1b4fda54dc5f87608b62228b9aefc0810000f79c4",
+     "5": "c0ae8efcba7e27fa51a13025e7cf48106421dbb6cdbb99a3656bedd05be43da1",
+     "6": "5e0d34264eb14d6f4ef63ae59a3115f9eebf8994d0e2f9f628dc8d50e1d7848c",
+     "7": "e33c74ca727a323ab80b9908811b8fc9607fad0ebfda8faa7c8cc58a39224752",
+     "8": "e4856c4bb86cedea3d5f1b0e45dbc90e229ff9e8c8c28900b122b8a2ee1a9068",
+     "9": "5fa01be418fda97d6dc69e476abcf9545679700ae859b84dfb40ad3d474ff1e0"
+    },
+    "ties": [
+     {
+      "median": 65.0,
+      "param": "epochs",
+      "picked": 60,
+      "rule": "halfway, lower grid point"
+     }
+    ],
+    "winners": [
+     {
+      "best_value": 0.8965022935779816,
+      "fold": 1,
+      "params": {
+       "dropout": 0.06725928691625145,
+       "epochs": 80,
+       "hidden_dim": 128,
+       "lambda_cov_diag": 0.006575357931247543,
+       "lambda_energy": 0.20822383430174804,
+       "latent_dim": 8,
+       "lr": 0.00022082254767648364,
+       "n_gmm": 4,
+       "n_layers": 1,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_DAGMM_fold1_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.9035029190992494,
+      "fold": 2,
+      "params": {
+       "dropout": 0.32168308411105856,
+       "epochs": 30,
+       "hidden_dim": 128,
+       "lambda_cov_diag": 0.00711023383016686,
+       "lambda_energy": 0.35774307672241257,
+       "latent_dim": 4,
+       "lr": 0.0003995103934768829,
+       "n_gmm": 4,
+       "n_layers": 1,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_DAGMM_fold2_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.9112582208376601,
+      "fold": 3,
+      "params": {
+       "dropout": 0.26174207866078836,
+       "epochs": 100,
+       "hidden_dim": 64,
+       "lambda_cov_diag": 0.001314580552348081,
+       "lambda_energy": 0.16917014881651662,
+       "latent_dim": 16,
+       "lr": 0.0001491501162490267,
+       "n_gmm": 2,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_DAGMM_fold3_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8443758344459279,
+      "fold": 4,
+      "params": {
+       "dropout": 0.33506017644415487,
+       "epochs": 100,
+       "hidden_dim": 32,
+       "lambda_cov_diag": 0.00826468179382884,
+       "lambda_energy": 0.16821491327170354,
+       "latent_dim": 16,
+       "lr": 0.00018482675159395983,
+       "n_gmm": 4,
+       "n_layers": 1,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_DAGMM_fold4_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8529665071770335,
+      "fold": 5,
+      "params": {
+       "dropout": 0.3850622786209589,
+       "epochs": 70,
+       "hidden_dim": 64,
+       "lambda_cov_diag": 0.004968860751115275,
+       "lambda_energy": 0.46667235376941285,
+       "latent_dim": 16,
+       "lr": 0.009010978509418973,
+       "n_gmm": 2,
+       "n_layers": 1,
+       "seq_length": 8
+      },
+      "study": "iot-a_w30_DAGMM_fold5_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8853486319505737,
+      "fold": 6,
+      "params": {
+       "dropout": 0.168556507195403,
+       "epochs": 80,
+       "hidden_dim": 128,
+       "lambda_cov_diag": 0.0010806767294324424,
+       "lambda_energy": 0.43317647891234023,
+       "latent_dim": 4,
+       "lr": 0.0001162675906741829,
+       "n_gmm": 2,
+       "n_layers": 1,
+       "seq_length": 6
+      },
+      "study": "iot-a_w30_DAGMM_fold6_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8825062927004675,
+      "fold": 7,
+      "params": {
+       "dropout": 0.4645161146086115,
+       "epochs": 60,
+       "hidden_dim": 64,
+       "lambda_cov_diag": 0.008032612558798074,
+       "lambda_energy": 0.08207050777299063,
+       "latent_dim": 8,
+       "lr": 0.00020660721060507793,
+       "n_gmm": 2,
+       "n_layers": 1,
+       "seq_length": 6
+      },
+      "study": "iot-a_w30_DAGMM_fold7_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.9167099342332987,
+      "fold": 8,
+      "params": {
+       "dropout": 0.04354701103621757,
+       "epochs": 30,
+       "hidden_dim": 128,
+       "lambda_cov_diag": 0.009541838640495076,
+       "lambda_energy": 0.07964617754160538,
+       "latent_dim": 4,
+       "lr": 0.0005082724892068634,
+       "n_gmm": 2,
+       "n_layers": 1,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_DAGMM_fold8_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.892177223952925,
+      "fold": 9,
+      "params": {
+       "dropout": 0.1132517631051812,
+       "epochs": 40,
+       "hidden_dim": 128,
+       "lambda_cov_diag": 0.0011603601813379664,
+       "lambda_energy": 0.11066918233138497,
+       "latent_dim": 8,
+       "lr": 0.00044599689239673717,
+       "n_gmm": 2,
+       "n_layers": 1,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_DAGMM_fold9_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.83023352793995,
+      "fold": 10,
+      "params": {
+       "dropout": 0.4582717859366098,
+       "epochs": 40,
+       "hidden_dim": 32,
+       "lambda_cov_diag": 0.0010690395512714236,
+       "lambda_energy": 0.2781097716706131,
+       "latent_dim": 16,
+       "lr": 0.008104007512079498,
+       "n_gmm": 4,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_DAGMM_fold10_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     }
+    ]
+   },
+   "DeepSVDD": {
+    "consensus": {
+     "dropout": 0.2312904512127455,
+     "finetune_epochs": 30,
+     "hidden_dim": 128,
+     "latent_dim": 32,
+     "lr": 0.0024189767585412686,
+     "n_layers": 2,
+     "pretrain_epochs": 40,
+     "seq_length": 5
+    },
+    "distributions": {
+     "dropout": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.0, \"high\": 0.5, \"log\": false}}",
+     "finetune_epochs": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 10, \"low\": 20, \"high\": 60}}",
+     "hidden_dim": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [32, 64, 128]}}",
+     "latent_dim": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [8, 16, 32]}}",
+     "lr": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.0001, \"high\": 0.01, \"log\": true}}",
+     "n_layers": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 1, \"low\": 1, \"high\": 2}}",
+     "pretrain_epochs": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 10, \"low\": 20, \"high\": 60}}",
+     "seq_length": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 1, \"low\": 5, \"high\": 11}}"
+    },
+    "optuna_db_sha256": {
+     "1": "0859a917f14d873b9a5bf3c7d287ec3c5432967b4929e3715b7198001928b6e9",
+     "10": "f780cb5911e9552e36df72ff1c925294560a4e13418ad77255b60def829b4060",
+     "2": "9e38248aee91879da8ebef897f74d689ea4b28a3aa9c11ffd3158b9f5b4d4343",
+     "3": "a9350db2464e4fea5db725c06e37fa7070ae50d28dc17124598d9895fd2c6c30",
+     "4": "688b24411b316177d5d7ba0199185bf98e2b1e66b0ada24720e582360cd2ba0e",
+     "5": "6618e2d6ffd3a42543b2809e7ab17ce5639656fbcf3b573030af94b1dacd9f26",
+     "6": "e3df07249caf710f1fa70e9fd3405b510517857f46f182c65bea1a9c644ccb34",
+     "7": "d08e2984f74ccadba8ddb7a8f3dfade6f8feebe149e60d2a81a446ddec9edb98",
+     "8": "e56b328cf3186c20e870137b5661bbfc31bf65150fdfb952a0a4ba5e932158b0",
+     "9": "6b7909ba60dc8cbbccdd91766280b7be6a52a14ebd5757933670a44ea0f79e1c"
+    },
+    "ties": [],
+    "winners": [
+     {
+      "best_value": 0.8783584534731325,
+      "fold": 1,
+      "params": {
+       "dropout": 0.49677254172091967,
+       "finetune_epochs": 20,
+       "hidden_dim": 32,
+       "latent_dim": 32,
+       "lr": 0.003802342154610556,
+       "n_layers": 2,
+       "pretrain_epochs": 30,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_DeepSVDD_fold1_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8883982683982683,
+      "fold": 2,
+      "params": {
+       "dropout": 0.16417828577251145,
+       "finetune_epochs": 20,
+       "hidden_dim": 64,
+       "latent_dim": 32,
+       "lr": 0.00019114343537580784,
+       "n_layers": 1,
+       "pretrain_epochs": 60,
+       "seq_length": 6
+      },
+      "study": "iot-a_w30_DeepSVDD_fold2_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8830477673935617,
+      "fold": 3,
+      "params": {
+       "dropout": 0.3563789221918801,
+       "finetune_epochs": 40,
+       "hidden_dim": 64,
+       "latent_dim": 32,
+       "lr": 0.0029607213678020656,
+       "n_layers": 2,
+       "pretrain_epochs": 40,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_DeepSVDD_fold3_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8715787716955941,
+      "fold": 4,
+      "params": {
+       "dropout": 0.46183389259778607,
+       "finetune_epochs": 40,
+       "hidden_dim": 64,
+       "latent_dim": 32,
+       "lr": 0.0008985948084457538,
+       "n_layers": 2,
+       "pretrain_epochs": 50,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_DeepSVDD_fold4_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.85089209855565,
+      "fold": 5,
+      "params": {
+       "dropout": 0.10974178627085324,
+       "finetune_epochs": 50,
+       "hidden_dim": 128,
+       "latent_dim": 8,
+       "lr": 0.0019763590799179898,
+       "n_layers": 2,
+       "pretrain_epochs": 40,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_DeepSVDD_fold5_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.829141886151232,
+      "fold": 6,
+      "params": {
+       "dropout": 0.19801473218727142,
+       "finetune_epochs": 40,
+       "hidden_dim": 128,
+       "latent_dim": 32,
+       "lr": 0.0032351638411413502,
+       "n_layers": 2,
+       "pretrain_epochs": 20,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_DeepSVDD_fold6_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8645292488750432,
+      "fold": 7,
+      "params": {
+       "dropout": 0.44331547577552854,
+       "finetune_epochs": 30,
+       "hidden_dim": 128,
+       "latent_dim": 32,
+       "lr": 0.0042486813540367485,
+       "n_layers": 2,
+       "pretrain_epochs": 50,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_DeepSVDD_fold7_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.845679012345679,
+      "fold": 8,
+      "params": {
+       "dropout": 0.26456617023821954,
+       "finetune_epochs": 20,
+       "hidden_dim": 32,
+       "latent_dim": 16,
+       "lr": 0.00015707228529376882,
+       "n_layers": 1,
+       "pretrain_epochs": 40,
+       "seq_length": 7
+      },
+      "study": "iot-a_w30_DeepSVDD_fold8_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8583852544132918,
+      "fold": 9,
+      "params": {
+       "dropout": 0.15097196347201858,
+       "finetune_epochs": 30,
+       "hidden_dim": 32,
+       "latent_dim": 32,
+       "lr": 0.0001785548230012479,
+       "n_layers": 1,
+       "pretrain_epochs": 40,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_DeepSVDD_fold9_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8644703919933279,
+      "fold": 10,
+      "params": {
+       "dropout": 0.12662760091399003,
+       "finetune_epochs": 20,
+       "hidden_dim": 128,
+       "latent_dim": 32,
+       "lr": 0.004584616301941239,
+       "n_layers": 2,
+       "pretrain_epochs": 50,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_DeepSVDD_fold10_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     }
+    ]
+   },
+   "IF": {
+    "consensus": {
+     "contamination": 0.09112896261758954,
+     "max_features": 0.6127203214839165,
+     "max_samples": 0.8569907023287047,
+     "n_estimators": 250
+    },
+    "distributions": {
+     "contamination": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.01, \"high\": 0.15, \"log\": false}}",
+     "max_features": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.5, \"high\": 1.0, \"log\": false}}",
+     "max_samples": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.5, \"high\": 1.0, \"log\": false}}",
+     "n_estimators": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 50, \"low\": 50, \"high\": 500}}"
+    },
+    "optuna_db_sha256": {
+     "1": "e282c8de1afa4bd1581c50b8bf806c89e0aed569375db4c94abd72055b427346",
+     "10": "71882f6e12cf06613fe3ef76da66c1bd211bbe91a3b7d0a5e06120b0f473370d",
+     "2": "3a96f8b0a34dfe729d4f36c02845c56ebcbd4342b2c5501fe307c87b5c5cb44c",
+     "3": "a12bd33e500dd8f8ade1d787499bc222ffc6e15ff14d9afaf4561d95fb5c0cc0",
+     "4": "305fb5e9963f12203a734a523845b266ec78a24718ed1497cc027c51ea640bb8",
+     "5": "e2be1cbff4e34a75a70e8bb6ca49dbd0ca7ad36af04f02bd7d70d67334ebcd31",
+     "6": "5daceba89400c2bb9f60ea3c77e9914f404205de781ef5280abb1494db2cb871",
+     "7": "f4503290721bb219e62e851f088a0bb756fd88574b88736c65cbfd2502ec0107",
+     "8": "08961a52104abc70e54b328992d12079940231860683b0df65b154a3ea4a0d24",
+     "9": "7234297545893619a59d587abc1d0656f517116c6cca23188e59c2b42b9ce777"
+    },
+    "ties": [
+     {
+      "median": 275.0,
+      "param": "n_estimators",
+      "picked": 250,
+      "rule": "halfway, lower grid point"
+     }
+    ],
+    "winners": [
+     {
+      "best_value": 0.9242142857142857,
+      "fold": 1,
+      "params": {
+       "contamination": 0.0932644577778746,
+       "max_features": 0.6960682518719795,
+       "max_samples": 0.9451641280860399,
+       "n_estimators": 350
+      },
+      "study": "iot-a_w30_IF_fold1_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.9080727272727273,
+      "fold": 2,
+      "params": {
+       "contamination": 0.017061463503633842,
+       "max_features": 0.515998988234678,
+       "max_samples": 0.5948986355677229,
+       "n_estimators": 250
+      },
+      "study": "iot-a_w30_IF_fold2_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.9176452875639867,
+      "fold": 3,
+      "params": {
+       "contamination": 0.029239957588457953,
+       "max_features": 0.833126334475539,
+       "max_samples": 0.8224400603286177,
+       "n_estimators": 200
+      },
+      "study": "iot-a_w30_IF_fold3_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.900479094076655,
+      "fold": 4,
+      "params": {
+       "contamination": 0.14369883850398532,
+       "max_features": 0.675515862582429,
+       "max_samples": 0.8915413443287917,
+       "n_estimators": 50
+      },
+      "study": "iot-a_w30_IF_fold4_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.9038433111603843,
+      "fold": 5,
+      "params": {
+       "contamination": 0.08899346745730449,
+       "max_features": 0.545558649940605,
+       "max_samples": 0.9634248416018861,
+       "n_estimators": 500
+      },
+      "study": "iot-a_w30_IF_fold5_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.897560975609756,
+      "fold": 6,
+      "params": {
+       "contamination": 0.041228002050489834,
+       "max_features": 0.573193541718727,
+       "max_samples": 0.994361365411475,
+       "n_estimators": 450
+      },
+      "study": "iot-a_w30_IF_fold6_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8990514905149051,
+      "fold": 7,
+      "params": {
+       "contamination": 0.11140314702147772,
+       "max_features": 0.8614375380656454,
+       "max_samples": 0.5510044385691841,
+       "n_estimators": 300
+      },
+      "study": "iot-a_w30_IF_fold7_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.872628726287263,
+      "fold": 8,
+      "params": {
+       "contamination": 0.0441502804636901,
+       "max_features": 0.5008247216418674,
+       "max_samples": 0.7096513827300086,
+       "n_estimators": 450
+      },
+      "study": "iot-a_w30_IF_fold8_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.9131285757302017,
+      "fold": 9,
+      "params": {
+       "contamination": 0.11597127551083501,
+       "max_features": 0.6135837250373284,
+       "max_samples": 0.9062115920136473,
+       "n_estimators": 50
+      },
+      "study": "iot-a_w30_IF_fold9_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.9294545454545454,
+      "fold": 10,
+      "params": {
+       "contamination": 0.10617223856606456,
+       "max_features": 0.6118569179305047,
+       "max_samples": 0.7094461258281809,
+       "n_estimators": 200
+      },
+      "study": "iot-a_w30_IF_fold10_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     }
+    ]
+   },
+   "LSTM_AE": {
+    "consensus": {
+     "dropout": 0.253975422248936,
+     "epochs": 50,
+     "hidden_dim": 32,
+     "lr": 0.0009435059525606612,
+     "n_layers": 1,
+     "seq_length": 5
+    },
+    "distributions": {
+     "dropout": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.0, \"high\": 0.5, \"log\": false}}",
+     "epochs": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 10, \"low\": 30, \"high\": 100}}",
+     "hidden_dim": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [32, 64, 128]}}",
+     "lr": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.0001, \"high\": 0.01, \"log\": true}}",
+     "n_layers": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 1, \"low\": 1, \"high\": 2}}",
+     "seq_length": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 1, \"low\": 5, \"high\": 11}}"
+    },
+    "optuna_db_sha256": {
+     "1": "5f3ff303e1e81adefe41813629dd911adfd0e4ea84d99bf55d1c1840958f34ed",
+     "10": "15f803f8f5e32a2dd3277455fb58a61610b26f0a2b48c0ef6713f30a106f6d6a",
+     "2": "a0f730f6cb6f62952f98613cc113a2e4a5ca60f84467223e1abb787c82647b28",
+     "3": "ef69cef81aeac26a413cba2b6f1ce0e450c3fba9f68f12d3b918e3f7ce40194b",
+     "4": "dc7a981a79383c5126de9b358e07bc4ac8d6feaad213bcedf97193fe336d4535",
+     "5": "db66f26e0d04b9b42d42c980140134fdac0dd9a80818da452eaeb95c43133424",
+     "6": "d4f06d4a76ac4edbb835258bfa897064a1f25563c927d5f0f94b6d8d3a3302bc",
+     "7": "263c85c3c464b69bc93f56d10eff6b26b5de6e0416a736fb66e7ee1faf60dfdd",
+     "8": "a47b9b7770b1135a7e2e0a3df00474ea42397a41fb13d4099eb9349fb70a93ab",
+     "9": "180210eca4a02804d9cf8fcf9f14e0ee89bc66b6b5a139608ca0f6a808fdc2cc"
+    },
+    "ties": [
+     {
+      "median": 55.0,
+      "param": "epochs",
+      "picked": 50,
+      "rule": "halfway, lower grid point"
+     }
+    ],
+    "winners": [
+     {
+      "best_value": 0.8544397116644823,
+      "fold": 1,
+      "params": {
+       "dropout": 0.1599300059768134,
+       "epochs": 30,
+       "hidden_dim": 32,
+       "lr": 0.00010171189994131444,
+       "n_layers": 1,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_LSTM_AE_fold1_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8653878231859883,
+      "fold": 2,
+      "params": {
+       "dropout": 0.24398224444112104,
+       "epochs": 60,
+       "hidden_dim": 64,
+       "lr": 0.0015158757943653585,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_LSTM_AE_fold2_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8777691242644514,
+      "fold": 3,
+      "params": {
+       "dropout": 0.14784244798554222,
+       "epochs": 50,
+       "hidden_dim": 32,
+       "lr": 0.0012509238211317988,
+       "n_layers": 1,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_LSTM_AE_fold3_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8654455941255007,
+      "fold": 4,
+      "params": {
+       "dropout": 0.35033361953227626,
+       "epochs": 90,
+       "hidden_dim": 32,
+       "lr": 0.008367596676210705,
+       "n_layers": 1,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_LSTM_AE_fold4_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8310960067969413,
+      "fold": 5,
+      "params": {
+       "dropout": 0.18995798447406187,
+       "epochs": 30,
+       "hidden_dim": 32,
+       "lr": 0.0002021717166629463,
+       "n_layers": 1,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_LSTM_AE_fold5_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8325403568394221,
+      "fold": 6,
+      "params": {
+       "dropout": 0.0035709634040008978,
+       "epochs": 60,
+       "hidden_dim": 128,
+       "lr": 0.003373352440445867,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_LSTM_AE_fold6_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8663464866735895,
+      "fold": 7,
+      "params": {
+       "dropout": 0.48993440914060843,
+       "epochs": 70,
+       "hidden_dim": 32,
+       "lr": 0.000279885561391495,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_LSTM_AE_fold7_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.7922724125995153,
+      "fold": 8,
+      "params": {
+       "dropout": 0.3434803220121283,
+       "epochs": 90,
+       "hidden_dim": 32,
+       "lr": 0.0020928396743464263,
+       "n_layers": 1,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_LSTM_AE_fold8_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8303046036690896,
+      "fold": 9,
+      "params": {
+       "dropout": 0.3673153028570547,
+       "epochs": 30,
+       "hidden_dim": 64,
+       "lr": 0.00010337201033432529,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_LSTM_AE_fold9_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8628440366972476,
+      "fold": 10,
+      "params": {
+       "dropout": 0.2639686000567509,
+       "epochs": 50,
+       "hidden_dim": 128,
+       "lr": 0.0007116368458888015,
+       "n_layers": 1,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_LSTM_AE_fold10_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     }
+    ]
+   },
+   "LSTM_VAE": {
+    "consensus": {
+     "beta": 0.07093339664289215,
+     "dropout": 0.3460034536041572,
+     "epochs": 50,
+     "hidden_dim": 64,
+     "latent_dim": 16,
+     "lr": 0.0015843856565491317,
+     "n_layers": 2,
+     "seq_length": 5
+    },
+    "distributions": {
+     "beta": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.01, \"high\": 0.5, \"log\": true}}",
+     "dropout": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.0, \"high\": 0.5, \"log\": false}}",
+     "epochs": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 10, \"low\": 30, \"high\": 100}}",
+     "hidden_dim": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [32, 64, 128]}}",
+     "latent_dim": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [16, 32, 64]}}",
+     "lr": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.0001, \"high\": 0.01, \"log\": true}}",
+     "n_layers": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 1, \"low\": 1, \"high\": 2}}",
+     "seq_length": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 1, \"low\": 5, \"high\": 11}}"
+    },
+    "optuna_db_sha256": {
+     "1": "2c9566084acb0db95468ff6e6a97af682c623ce533a70e1b8fa44ab5754d7eb4",
+     "10": "4eed832ccf13df0ea06360506ebdffbcdeccdd7369603e3f031073a2b87ab0c5",
+     "2": "8716a908aeb16b663d90b47f9317bed327f922c10b63ded35bf5a3fbacbb5b25",
+     "3": "2c4cc9c713841c2d059f2369a08fe94a587f825166c3dba66e0c73bf8a3aca6d",
+     "4": "ba0b6733e85532e3becc7669c74d207a84ff15e5b29c239d26952e1e0df2a3ec",
+     "5": "bdc3cdacc94a67f01f62c495e93e43fb6c1254caea2201cedfd3b63191fdc9a0",
+     "6": "29771b8dec50ee0212e76de649fbd83c57d7344cdf684b6c37d92e36a282c5ba",
+     "7": "0c68ad8de4b31c216647e26cc240be256d8a8f079098bfc4b2ab06082407debf",
+     "8": "d44648dbb766ef1246e87fefc682a57b9243b74b232c2f8a6f1877e39add1c88",
+     "9": "55b1ccc11f4163fda79d9773315e4bc7b3c1120193029d3221aee31cc86d32af"
+    },
+    "ties": [
+     {
+      "median": 55.0,
+      "param": "epochs",
+      "picked": 50,
+      "rule": "halfway, lower grid point"
+     },
+     {
+      "count": 4,
+      "param": "hidden_dim",
+      "picked": 64,
+      "rule": "smallest value",
+      "tied": [
+       64,
+       128
+      ]
+     },
+     {
+      "count": 4,
+      "param": "latent_dim",
+      "picked": 16,
+      "rule": "smallest value",
+      "tied": [
+       16,
+       32
+      ]
+     }
+    ],
+    "winners": [
+     {
+      "best_value": 0.8565694626474443,
+      "fold": 1,
+      "params": {
+       "beta": 0.02670084052192073,
+       "dropout": 0.05402013969436198,
+       "epochs": 30,
+       "hidden_dim": 32,
+       "latent_dim": 32,
+       "lr": 0.00024381978872273214,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_LSTM_VAE_fold1_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8717264386989159,
+      "fold": 2,
+      "params": {
+       "beta": 0.026595314898509415,
+       "dropout": 0.20770441930971217,
+       "epochs": 80,
+       "hidden_dim": 128,
+       "latent_dim": 32,
+       "lr": 0.0020216756446752734,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_LSTM_VAE_fold2_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8787210107303566,
+      "fold": 3,
+      "params": {
+       "beta": 0.11049253755840428,
+       "dropout": 0.35979602920398246,
+       "epochs": 50,
+       "hidden_dim": 64,
+       "latent_dim": 64,
+       "lr": 0.0012140359255968529,
+       "n_layers": 1,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_LSTM_VAE_fold3_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8654873164218959,
+      "fold": 4,
+      "params": {
+       "beta": 0.016274633101441446,
+       "dropout": 0.16549338990245369,
+       "epochs": 80,
+       "hidden_dim": 64,
+       "latent_dim": 32,
+       "lr": 0.0010427717205080229,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_LSTM_VAE_fold4_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8440951571792692,
+      "fold": 5,
+      "params": {
+       "beta": 0.3666746173466637,
+       "dropout": 0.4336351451202796,
+       "epochs": 60,
+       "hidden_dim": 128,
+       "latent_dim": 64,
+       "lr": 0.0014699050618949528,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_LSTM_VAE_fold5_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8339422259983008,
+      "fold": 6,
+      "params": {
+       "beta": 0.13767567643347037,
+       "dropout": 0.42668286150707446,
+       "epochs": 50,
+       "hidden_dim": 128,
+       "latent_dim": 16,
+       "lr": 0.0004671440746516747,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_LSTM_VAE_fold6_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8679041190723434,
+      "fold": 7,
+      "params": {
+       "beta": 0.2950473734981444,
+       "dropout": 0.41642760822286634,
+       "epochs": 30,
+       "hidden_dim": 64,
+       "latent_dim": 16,
+       "lr": 0.0026672385080744316,
+       "n_layers": 1,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_LSTM_VAE_fold7_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.7895898234683282,
+      "fold": 8,
+      "params": {
+       "beta": 0.016345555103529537,
+       "dropout": 0.056143423203975286,
+       "epochs": 40,
+       "hidden_dim": 128,
+       "latent_dim": 16,
+       "lr": 0.008341605269621376,
+       "n_layers": 1,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_LSTM_VAE_fold8_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8327275874004846,
+      "fold": 9,
+      "params": {
+       "beta": 0.04553743511083979,
+       "dropout": 0.4573413075928689,
+       "epochs": 70,
+       "hidden_dim": 32,
+       "latent_dim": 16,
+       "lr": 0.0017077823416993057,
+       "n_layers": 1,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_LSTM_VAE_fold9_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8551709758131777,
+      "fold": 10,
+      "params": {
+       "beta": 0.2038779003232329,
+       "dropout": 0.33221087800433186,
+       "epochs": 90,
+       "hidden_dim": 64,
+       "latent_dim": 32,
+       "lr": 0.009789863194731664,
+       "n_layers": 2,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_LSTM_VAE_fold10_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     }
+    ]
+   },
+   "OC_SVM": {
+    "consensus": {
+     "gamma": "scale",
+     "kernel": "rbf",
+     "nu": 0.023401186451331248
+    },
+    "distributions": {
+     "gamma": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [\"scale\", \"auto\"]}}",
+     "kernel": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [\"rbf\", \"poly\", \"sigmoid\"]}}",
+     "nu": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.01, \"high\": 0.2, \"log\": false}}"
+    },
+    "optuna_db_sha256": {
+     "1": "231ce665bf3bd59de7e7e5b8abef045b5d7247d1c69dc63f3c6919dc51858ff2",
+     "10": "cd7abb9fd4921a694c769dffd9b1d2e3702e659972ee9224a0a7fda2fa4b484d",
+     "2": "d86f0ded968fbaee7402d59607fde0018b7b9f5a60a7ffda1da7ca784fd2ceb5",
+     "3": "91a260b4c641bd5030f656939eac8c2cc67c0ae7c9247db157004f3db064794e",
+     "4": "ef8d9203f90b5239faf897927fd4ae044f644a45a5c33ddd10867ab89c929b51",
+     "5": "00a172a98029d8ff924f8b2babfcdeba67a777aec1cf3702e441b9a967d34dee",
+     "6": "51e59b7d3a230f46424ee6fbd3f04ac7f0fd6e5185f6cfedbda503ca99c68c44",
+     "7": "30368a1ed70cd5bd29c9d23274c0cff3e0be1ad33fe9828edd39baa387c001c5",
+     "8": "256aef11502ab7b1d43f5cf2daed6ca46fb3bbedd3ba0b0f6728351817f40c59",
+     "9": "1f49b36c3514d707aabfd0ae672afe93f2ca8381f2a4bc0dddbd19cd59dc344a"
+    },
+    "ties": [],
+    "winners": [
+     {
+      "best_value": 0.9143571428571429,
+      "fold": 1,
+      "params": {
+       "gamma": "scale",
+       "kernel": "rbf",
+       "nu": 0.01592926466171462
+      },
+      "study": "iot-a_w30_OC_SVM_fold1_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.9030545454545453,
+      "fold": 2,
+      "params": {
+       "gamma": "auto",
+       "kernel": "rbf",
+       "nu": 0.011406795334438398
+      },
+      "study": "iot-a_w30_OC_SVM_fold2_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.9096657633242999,
+      "fold": 3,
+      "params": {
+       "gamma": "scale",
+       "kernel": "rbf",
+       "nu": 0.023185079947367
+      },
+      "study": "iot-a_w30_OC_SVM_fold3_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8887921022067363,
+      "fold": 4,
+      "params": {
+       "gamma": "scale",
+       "kernel": "rbf",
+       "nu": 0.05976391924519189
+      },
+      "study": "iot-a_w30_OC_SVM_fold4_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8882113821138211,
+      "fold": 5,
+      "params": {
+       "gamma": "scale",
+       "kernel": "rbf",
+       "nu": 0.02361729295529549
+      },
+      "study": "iot-a_w30_OC_SVM_fold5_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8924611973392461,
+      "fold": 6,
+      "params": {
+       "gamma": "auto",
+       "kernel": "rbf",
+       "nu": 0.011003790642025427
+      },
+      "study": "iot-a_w30_OC_SVM_fold6_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.9010087323095454,
+      "fold": 7,
+      "params": {
+       "gamma": "scale",
+       "kernel": "rbf",
+       "nu": 0.10605470198163353
+      },
+      "study": "iot-a_w30_OC_SVM_fold7_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8733062330623305,
+      "fold": 8,
+      "params": {
+       "gamma": "scale",
+       "kernel": "rbf",
+       "nu": 0.11160013653037705
+      },
+      "study": "iot-a_w30_OC_SVM_fold8_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8998042758205359,
+      "fold": 9,
+      "params": {
+       "gamma": "scale",
+       "kernel": "rbf",
+       "nu": 0.16418178518126847
+      },
+      "study": "iot-a_w30_OC_SVM_fold9_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.9070545454545454,
+      "fold": 10,
+      "params": {
+       "gamma": "auto",
+       "kernel": "rbf",
+       "nu": 0.016354077293911536
+      },
+      "study": "iot-a_w30_OC_SVM_fold10_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     }
+    ]
+   },
+   "RF": {
+    "consensus": {
+     "max_depth": 15,
+     "max_features": "sqrt",
+     "min_samples_leaf": 6,
+     "n_estimators": 50
+    },
+    "distributions": {
+     "max_depth": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 1, \"low\": 5, \"high\": 30}}",
+     "max_features": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [\"sqrt\", \"log2\"]}}",
+     "min_samples_leaf": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 1, \"low\": 1, \"high\": 20}}",
+     "n_estimators": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 50, \"low\": 50, \"high\": 500}}"
+    },
+    "optuna_db_sha256": {
+     "1": "87ddee8e99451f72f958dd34305ecf734235d43034c543f9a2ad0d049ed1d004",
+     "10": "8d1f950450858b569a2356c9252af331294341d231f1ec4fd14e618768457219",
+     "2": "d7fbf27e6ed6ac8797c0c071f010767b824b772b18864b12d992a6740db40d3f",
+     "3": "c677d76fb21f74242fe0f9caa5f177b631900cfbed649a19c95c00b0967f3e72",
+     "4": "96c9723240d860782c67c94f876b402e6ed057601444bb0d29f7bdf65df41f38",
+     "5": "8f1ee6686d5277db00805238b79279626fe4beaa30f822230f29beafe7eca91b",
+     "6": "fd87074e72226e0c72933aa535e5805f005b85b329abee6a1045a5a6bce3e6a6",
+     "7": "a6d927e1764c47f10fa5674d8fdade9606196723f956cf251e0b9ea142907956",
+     "8": "c11df8d48b8faddbea118571f95c0cf0d5c4e4426392a91bcc1ccfa4aeb9e417",
+     "9": "c0bcf77c087d64688136d58d6b71e10703776f3f18f17d57883f7ea6e3a70b31"
+    },
+    "ties": [
+     {
+      "median": 75.0,
+      "param": "n_estimators",
+      "picked": 50,
+      "rule": "halfway, lower grid point"
+     }
+    ],
+    "winners": [
+     {
+      "best_value": 0.9443571428571429,
+      "fold": 1,
+      "params": {
+       "max_depth": 27,
+       "max_features": "log2",
+       "min_samples_leaf": 7,
+       "n_estimators": 50
+      },
+      "study": "iot-a_w30_RF_fold1_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 50
+     },
+     {
+      "best_value": 0.9312727272727273,
+      "fold": 2,
+      "params": {
+       "max_depth": 22,
+       "max_features": "log2",
+       "min_samples_leaf": 6,
+       "n_estimators": 100
+      },
+      "study": "iot-a_w30_RF_fold2_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 50
+     },
+     {
+      "best_value": 0.9640921409214092,
+      "fold": 3,
+      "params": {
+       "max_depth": 27,
+       "max_features": "sqrt",
+       "min_samples_leaf": 16,
+       "n_estimators": 500
+      },
+      "study": "iot-a_w30_RF_fold3_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 50
+     },
+     {
+      "best_value": 0.9492232868757259,
+      "fold": 4,
+      "params": {
+       "max_depth": 8,
+       "max_features": "sqrt",
+       "min_samples_leaf": 1,
+       "n_estimators": 50
+      },
+      "study": "iot-a_w30_RF_fold4_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 50
+     },
+     {
+      "best_value": 0.9329637841832964,
+      "fold": 5,
+      "params": {
+       "max_depth": 9,
+       "max_features": "sqrt",
+       "min_samples_leaf": 19,
+       "n_estimators": 50
+      },
+      "study": "iot-a_w30_RF_fold5_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 50
+     },
+     {
+      "best_value": 0.9607538802660754,
+      "fold": 6,
+      "params": {
+       "max_depth": 5,
+       "max_features": "log2",
+       "min_samples_leaf": 3,
+       "n_estimators": 100
+      },
+      "study": "iot-a_w30_RF_fold6_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 50
+     },
+     {
+      "best_value": 0.9526498042758206,
+      "fold": 7,
+      "params": {
+       "max_depth": 7,
+       "max_features": "sqrt",
+       "min_samples_leaf": 1,
+       "n_estimators": 450
+      },
+      "study": "iot-a_w30_RF_fold7_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 50
+     },
+     {
+      "best_value": 0.9240439626618489,
+      "fold": 8,
+      "params": {
+       "max_depth": 13,
+       "max_features": "log2",
+       "min_samples_leaf": 10,
+       "n_estimators": 50
+      },
+      "study": "iot-a_w30_RF_fold8_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 50
+     },
+     {
+      "best_value": 0.9433152664859982,
+      "fold": 9,
+      "params": {
+       "max_depth": 17,
+       "max_features": "sqrt",
+       "min_samples_leaf": 6,
+       "n_estimators": 50
+      },
+      "study": "iot-a_w30_RF_fold9_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 50
+     },
+     {
+      "best_value": 0.9573090909090909,
+      "fold": 10,
+      "params": {
+       "max_depth": 28,
+       "max_features": "sqrt",
+       "min_samples_leaf": 1,
+       "n_estimators": 500
+      },
+      "study": "iot-a_w30_RF_fold10_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 50
+     }
+    ]
+   },
+   "Trans_AE": {
+    "consensus": {
+     "d_model": 32,
+     "dropout": 0.237836063984504,
+     "epochs": 40,
+     "lr": 0.0005586853502075018,
+     "n_layers": 2,
+     "nhead": 8,
+     "seq_length": 5
+    },
+    "distributions": {
+     "d_model": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [32, 64, 128]}}",
+     "dropout": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.0, \"high\": 0.5, \"log\": false}}",
+     "epochs": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 10, \"low\": 30, \"high\": 100}}",
+     "lr": "{\"name\": \"FloatDistribution\", \"attributes\": {\"step\": null, \"low\": 0.0001, \"high\": 0.01, \"log\": true}}",
+     "n_layers": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 1, \"low\": 1, \"high\": 3}}",
+     "nhead": "{\"name\": \"CategoricalDistribution\", \"attributes\": {\"choices\": [2, 4, 8]}}",
+     "seq_length": "{\"name\": \"IntDistribution\", \"attributes\": {\"log\": false, \"step\": 1, \"low\": 5, \"high\": 11}}"
+    },
+    "optuna_db_sha256": {
+     "1": "8928e2230c9488172db34a318c8848620654fed5da23b2fdfa0cc323de44db6d",
+     "10": "e280ab96ddf0e67814f3da1c3f282f3f752b808159aaa293599e4f5e6d537e14",
+     "2": "e712fc14b66c9d5ffa20c3281f63cbca64d5376d5b88682676a4a39ac8a8ba2b",
+     "3": "ef1af0a99a6c6cdce79675f66528599b6144cdd74fd15a280b015b11ebe2a765",
+     "4": "c3fe2450f676648d36624703b046885e7979dc67a12eb17faa5a9ea5c2a21466",
+     "5": "01fca1ea72d03eded72edba49488134f4fb510bad6b56b8621f6083c262bf520",
+     "6": "0696f56b4633a2f037b19c968bd5bf903c23289048317d47da4e0d0e4e3325c3",
+     "7": "02fc2d4d00502463e0fe297fd10c8359b43f44cdd67710cb110ee7ef2609ed66",
+     "8": "2aeab313e9414d9ab7f175b3d1450fc7662782103ccf44a974449042357bb42f",
+     "9": "4dec2c865ba08729272ce71082f150b03e65b347a1fd48c7d4d2af2df5791568"
+    },
+    "ties": [],
+    "winners": [
+     {
+      "best_value": 0.8571428571428572,
+      "fold": 1,
+      "params": {
+       "d_model": 64,
+       "dropout": 0.1071442439375183,
+       "epochs": 80,
+       "lr": 0.0014016059010726718,
+       "n_layers": 1,
+       "nhead": 8,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_Trans_AE_fold1_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8638865721434528,
+      "fold": 2,
+      "params": {
+       "d_model": 32,
+       "dropout": 0.06834234505130762,
+       "epochs": 30,
+       "lr": 0.00011548308744203883,
+       "n_layers": 3,
+       "nhead": 8,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_Trans_AE_fold2_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8736154378677743,
+      "fold": 3,
+      "params": {
+       "d_model": 128,
+       "dropout": 0.49709633039934525,
+       "epochs": 30,
+       "lr": 0.004335693973860483,
+       "n_layers": 2,
+       "nhead": 2,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_Trans_AE_fold3_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8640687583444593,
+      "fold": 4,
+      "params": {
+       "d_model": 32,
+       "dropout": 0.47755145262540816,
+       "epochs": 40,
+       "lr": 0.00010812226861462146,
+       "n_layers": 2,
+       "nhead": 8,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_Trans_AE_fold4_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8275276125743416,
+      "fold": 5,
+      "params": {
+       "d_model": 32,
+       "dropout": 0.29639819293400743,
+       "epochs": 30,
+       "lr": 0.000105120651916954,
+       "n_layers": 3,
+       "nhead": 4,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_Trans_AE_fold5_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8339847068819032,
+      "fold": 6,
+      "params": {
+       "d_model": 32,
+       "dropout": 0.030220516854566254,
+       "epochs": 50,
+       "lr": 0.00010197279160729513,
+       "n_layers": 3,
+       "nhead": 2,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_Trans_AE_fold6_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.860289027345102,
+      "fold": 7,
+      "params": {
+       "d_model": 64,
+       "dropout": 0.10061336760309347,
+       "epochs": 40,
+       "lr": 0.00022269406849500354,
+       "n_layers": 2,
+       "nhead": 8,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_Trans_AE_fold7_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8074160609207338,
+      "fold": 8,
+      "params": {
+       "d_model": 128,
+       "dropout": 0.4613591957377409,
+       "epochs": 40,
+       "lr": 0.004337909498174169,
+       "n_layers": 2,
+       "nhead": 2,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_Trans_AE_fold8_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8525441329179647,
+      "fold": 9,
+      "params": {
+       "d_model": 128,
+       "dropout": 0.21758874714909737,
+       "epochs": 30,
+       "lr": 0.004514945850312822,
+       "n_layers": 3,
+       "nhead": 4,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_Trans_AE_fold9_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     },
+     {
+      "best_value": 0.8570892410341953,
+      "fold": 10,
+      "params": {
+       "d_model": 32,
+       "dropout": 0.2580833808199106,
+       "epochs": 40,
+       "lr": 0.009882021222225333,
+       "n_layers": 2,
+       "nhead": 8,
+       "seq_length": 5
+      },
+      "study": "iot-a_w30_Trans_AE_fold10_lofo-none_derived-on_win-c2b58e76f452",
+      "trials_completed": 100
+     }
+    ]
+   }
+  }
+ }
+}

@@ -1,0 +1,77 @@
+{
+ "CNN_AE": {
+  "dropout": 0.28073170099709494,
+  "epochs": 60,
+  "filters": 16,
+  "kernel_size": 3,
+  "lr": 0.0008546528535497345,
+  "n_layers": 3,
+  "seq_length": 5
+ },
+ "DAGMM": {
+  "dropout": 0.2917125813859235,
+  "epochs": 60,
+  "hidden_dim": 128,
+  "lambda_cov_diag": 0.005715945936510459,
+  "lambda_energy": 0.18768392855002908,
+  "latent_dim": 16,
+  "lr": 0.00029702003789441487,
+  "n_gmm": 2,
+  "n_layers": 1,
+  "seq_length": 5
+ },
+ "DeepSVDD": {
+  "dropout": 0.2312904512127455,
+  "finetune_epochs": 30,
+  "hidden_dim": 128,
+  "latent_dim": 32,
+  "lr": 0.0024189767585412686,
+  "n_layers": 2,
+  "pretrain_epochs": 40,
+  "seq_length": 5
+ },
+ "IF": {
+  "contamination": 0.09112896261758954,
+  "max_features": 0.6127203214839165,
+  "max_samples": 0.8569907023287047,
+  "n_estimators": 250
+ },
+ "LSTM_AE": {
+  "dropout": 0.253975422248936,
+  "epochs": 50,
+  "hidden_dim": 32,
+  "lr": 0.0009435059525606612,
+  "n_layers": 1,
+  "seq_length": 5
+ },
+ "LSTM_VAE": {
+  "beta": 0.07093339664289215,
+  "dropout": 0.3460034536041572,
+  "epochs": 50,
+  "hidden_dim": 64,
+  "latent_dim": 16,
+  "lr": 0.0015843856565491317,
+  "n_layers": 2,
+  "seq_length": 5
+ },
+ "OC_SVM": {
+  "gamma": "scale",
+  "kernel": "rbf",
+  "nu": 0.023401186451331248
+ },
+ "RF": {
+  "max_depth": 15,
+  "max_features": "sqrt",
+  "min_samples_leaf": 6,
+  "n_estimators": 50
+ },
+ "Trans_AE": {
+  "d_model": 32,
+  "dropout": 0.237836063984504,
+  "epochs": 40,
+  "lr": 0.0005586853502075018,
+  "n_layers": 2,
+  "nhead": 8,
+  "seq_length": 5
+ }
+}
