@@ -1,0 +1,7 @@
+# The classical detectors of protocol 5.9.6 (analysis/classical.py detectors), installed on top of the training
+# environment: training/image/requirements.lock, or its 35 platform-independent pins plus torch on a Mac. Versions
+# released before 17 October 2026.
+pyod==3.6.7
+stumpy==1.14.1
+numba==0.68.0
+llvmlite==0.50.0

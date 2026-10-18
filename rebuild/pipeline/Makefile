@@ -13,7 +13,7 @@ ARGS = --campaign-dir $(CAMPAIGN) --out $(OUT) \
 	$(if $(FREEZE),--freeze-marker $(FREEZE)) $(if $(CONFIG),--config $(CONFIG)) \
 	$(if $(CHECK),--check-against $(CHECK))
 
-.PHONY: build labels features folds validate synth test baselines metrics stats
+.PHONY: build labels features folds validate synth test baselines metrics stats posthoc describe numbers tables figures check from-scores verify-inputs gate ewma-mechanism classical build-c1 build-replicates train freeze train-frozen all explore cost
 
 build:
 	$(PY) -m streamprep build $(ARGS) --stage all
@@ -58,3 +58,104 @@ metrics:
 
 stats:
 	$(APY) -m analysis.run stats --out $(RESULTS)
+
+# D5 post hoc analyses, descriptive tables, numbers.tex, tables, figures and the claims harness (7.1 steps 9 to 11).
+#   make from-scores ... RESULTS=/path/results [MANUSCRIPT=main.tex ALLOW=allowed.json PDF=main.pdf BUILD_RECORD=build.json]
+MANUSCRIPT ?=
+ALLOW ?=
+PDF ?=
+BUILD_RECORD ?=
+
+posthoc:
+	$(APY) -m analysis.posthoc --out $(RESULTS)
+
+describe:
+	$(APY) -m analysis.describe --out $(RESULTS)
+
+numbers:
+	$(APY) -m analysis.numbers_tex --out $(RESULTS) --tex $(RESULTS)/numbers.tex --claims $(RESULTS)/claims.json
+
+tables:
+	$(APY) -m analysis.tables --out $(RESULTS) --dest $(RESULTS)/tables
+	if [ -d $(RESULTS)/explore ]; then $(APY) -m analysis.tables_explore --out $(RESULTS) --dest $(RESULTS)/tables; fi
+
+figures:
+	$(APY) -m analysis.figures --out $(RESULTS) --dest $(RESULTS)/figures
+
+check:
+	$(APY) -m analysis.check --results $(RESULTS) --numbers $(RESULTS)/numbers.tex --claims $(RESULTS)/claims.json \
+		$(if $(MANUSCRIPT),--tex $(MANUSCRIPT)) $(if $(ALLOW),--allow $(ALLOW)) $(if $(PDF),--pdf $(PDF)) \
+		$(if $(BUILD_RECORD),--build-record $(BUILD_RECORD))
+
+from-scores: metrics stats posthoc describe numbers tables figures check
+
+# The remaining steps of protocol 7.1, added after registration (D6). COPIES holds each campaign's verified copy as
+# <cid><COPY_SUFFIX>/ (the deposit's campaign/<cid>/ with COPY_SUFFIX empty). EXTRA holds the exploratory scores.
+# CPY is an environment with pyod and stumpy for the classical detectors (5.9.6).
+COPIES ?=
+COPY_SUFFIX ?= -final
+EXTRA ?=
+CPY ?= $(PY)
+IMAGE ?=
+CODE ?=
+TRAIN_RUN ?=
+FROZEN_RUN ?=
+SHARED ?=
+
+verify-inputs:
+	for c in $(CAMPAIGNS); do $(PY) -m streamprep validate --campaign-dir $(COPIES)/$$c$(COPY_SUFFIX) || exit 1; done
+
+gate:
+	$(APY) -m analysis.gate_summary --copies $(COPIES) --copy-suffix='$(COPY_SUFFIX)' --derived $(DERIVED) \
+		--out $(RESULTS)/gate --offline-gate
+
+ewma-mechanism:
+	for c in $(CAMPAIGNS); do $(PY) -m analysis.ewma_mechanism score --derived $(DERIVED) --campaign $$c --out $(EXTRA) \
+		$(if $(FREEZE),--freeze-marker $(FREEZE)) || exit 1; done
+	$(APY) -m analysis.ewma_mechanism summarize --derived $(DERIVED) --phase-b $(PHASE_B) --baselines $(BASELINES) \
+		--extra $(EXTRA) --results $(RESULTS) --out $(RESULTS)/ewma_mechanism
+
+classical:
+	for c in $(CAMPAIGNS); do \
+		$(APY) -m analysis.classical rules --derived $(DERIVED) --campaign $$c --out $(EXTRA) $(if $(FREEZE),--freeze-marker $(FREEZE)) && \
+		$(CPY) -m analysis.classical detectors --derived $(DERIVED) --campaign $$c --out $(EXTRA) $(if $(FREEZE),--freeze-marker $(FREEZE)) \
+		|| exit 1; done
+	$(APY) -m analysis.classical summarize --derived $(DERIVED) --extra $(EXTRA) --results $(RESULTS) --out $(RESULTS)/classical
+
+# Training (7.1 step 6) runs in the training image on a GPU machine: the campaign-1 search and window jobs, then the
+# freeze, then the frozen, category and cross-workload fits (6.3). make all = verify-inputs, the builds, these, and
+# from-scores. The freeze writes ../frozen, which the author commits and tags before train-frozen reads campaigns 2
+# and 3 (6.1.2, 7.1).
+# BUILD_OUT/derived is DERIVED. Campaign 1 builds before training. The replicates build with the freeze marker,
+# which only exists after the freeze (6.1, 7.1).
+BUILD_OUT ?=
+build-c1:
+	for c in ec-a iot-a; do $(PY) -m streamprep build --campaign-dir $(COPIES)/$$c$(COPY_SUFFIX) --out $(BUILD_OUT) \
+		--stage all || exit 1; done
+
+build-replicates:
+	for c in ec-b ec-c iot-b iot-c; do $(PY) -m streamprep build --campaign-dir $(COPIES)/$$c$(COPY_SUFFIX) \
+		--out $(BUILD_OUT) --stage all --freeze-marker $(FREEZE) || exit 1; done
+	$(PY) training/cross_train.py --write-shared $(DERIVED)/shared_30s.json --derived $(DERIVED)
+
+train:
+	training/image/run_in_image.sh run --image $(IMAGE) --code $(CODE) --derived $(DERIVED) --out $(TRAIN_RUN) \
+		-- --phases search window
+
+freeze:
+	$(PY) training/freeze.py --results $(TRAIN_RUN) --out ../frozen --expect-trials 100
+
+train-frozen:
+	training/image/run_in_image.sh run --image $(IMAGE) --code $(CODE) --derived $(DERIVED) --out $(FROZEN_RUN) \
+		-- --phases frozen category cross --frozen-dir /code/rebuild/frozen --shared /data/shared_30s.json
+
+all: verify-inputs build-c1 train freeze build-replicates train-frozen baselines metrics stats posthoc describe gate ewma-mechanism classical explore cost numbers tables figures check
+
+# Exploratory analyses of 5.9 from the stored scores (D6), and the cost measurement of 5.9.18 (a GPU-free fit per
+# model on one machine, in the training environment).
+explore:
+	$(APY) -m analysis.explore --derived $(DERIVED) --phase-b $(PHASE_B) --baselines $(BASELINES) --search-run $(TRAIN_RUN) \
+		--copies $(COPIES) --copy-suffix='$(COPY_SUFFIX)' --results $(RESULTS)
+
+cost:
+	$(PY) -m analysis.cost --derived $(DERIVED) --frozen-dir ../frozen --out $(RESULTS)/cost --phase-b $(PHASE_B)

@@ -117,7 +117,17 @@ def cmd_metrics(a):
         rows += [{"campaign_id": c, "attempt_key": k, "run_type": r.run_type, "block": int(r.block),
                   "position": int(r.position)} for k, r in at[at["run_type"] != "F0"].iterrows()]
     pd.DataFrame(rows).to_parquet(out / "positions.parquet", index=False)
-    (out / "inputs_sha256.json").write_text(json.dumps(dict(sorted(hashes.items())), indent=1) + "\n")
+    roots = {str(Path(a.phase_b).resolve()): "phase_b", str(Path(a.baselines).resolve()): "baselines",
+             str(Path(a.derived).resolve()): "derived"}
+
+    def rel(k):     # relative keys, so the record holds no local path (7.5)
+        rp = str(Path(k).resolve()) if k.startswith("/") else k
+        for root, name in roots.items():
+            if rp.startswith(root + "/"):
+                return f"{name}/{rp[len(root) + 1:]}"
+        return k
+    (out / "inputs_sha256.json").write_text(json.dumps(dict(sorted((rel(k), v) for k, v in hashes.items())),
+                                                       indent=1) + "\n")
     (out / "env.json").write_text(json.dumps(env_record(), indent=1) + "\n")
     print(f"metrics: {len(fm)} fold rows, {len(runs)} run rows, {len(hashes)} input files")
 
